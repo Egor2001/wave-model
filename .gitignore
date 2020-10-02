@@ -1,3 +1,10 @@
+# wave-model
+bin/
+obj/
+test/
+tags
+*.tags
+
 # Prerequisites
 *.d
 
