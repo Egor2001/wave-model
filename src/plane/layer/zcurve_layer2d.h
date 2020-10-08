@@ -1,5 +1,5 @@
-#ifndef WAVE_MODEL_SOLVER_LAYER_H_
-#define WAVE_MODEL_SOLVER_LAYER_H_
+#ifndef WAVE_MODEL_LAYER_ZCURVE_LAYER_H_
+#define WAVE_MODEL_LAYER_ZCURVE_LAYER_H_
 
 #include <vector>
 #include <algorithm>
@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace {
+namespace wave_model {
 
 // TODO: border & PML
 template<class TD, size_t ND>
@@ -32,7 +32,7 @@ public:
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_top(uint64_t idx, uint64_t cnt) noexcept
     {
-        static constexpr NOffset = (1 << NCellRank) * (1 << NCellRank);
+        constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
         // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
         // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
 
@@ -45,7 +45,7 @@ public:
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_bottom(uint64_t idx, uint64_t cnt) noexcept
     {
-        static constexpr NOffset = (1 << NCellRank) * (1 << NCellRank);
+        constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
         // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
         // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
 
@@ -58,7 +58,7 @@ public:
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_left(uint64_t idx, uint64_t cnt) noexcept
     {
-        static constexpr NOffset = (1 << NCellRank) * (1 << NCellRank);
+        constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
         // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
         // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
 
@@ -71,7 +71,7 @@ public:
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_right(uint64_t idx, uint64_t cnt) noexcept
     {
-        static constexpr NOffset = (1 << NCellRank) * (1 << NCellRank);
+        constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
         // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
         // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
 
@@ -82,17 +82,16 @@ public:
     }
     //------------------------------------------------------------ 
 
-    explicit WmZCurveLayer2D(double length):
-        length_(length),
+    WmZCurveLayer2D():
         data_vec_(NDomainLength * NDomainLength)
     {}
 
     template<class FInitFunc>
-    WmZCurveLayer2D(double length, FInitFunc func):
-        WmZCurveLayer2D(length)
+    void init(double length, FInitFunc func)
     {
         double scale_factor = length / NDomainLength;
 
+        int64_t idx = 0;
         for (uint64_t y_idx = 0; y_idx < NDomainLength; ++y_idx)
         {
             for (uint64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
@@ -102,7 +101,7 @@ public:
 
                 data_vec_[idx] = func(x, y);
 
-                idx = off_right<0>(idx, 1);
+                idx += off_right<0>(idx, 1);
             }
 
             idx = off_bottom<0>(idx, 1);
@@ -123,11 +122,10 @@ public:
 
     const TData& operator [] (uint64_t idx) const
     {
-        return const_cast<WmLayer2D*>(this)->operator[](idx);
+        return const_cast<WmZCurveLayer2D*>(this)->operator[](idx);
     }
 
 private:
-    double length_;
     std::vector<TData> data_vec_;
 };
 
@@ -146,7 +144,7 @@ public:
         stream << "WmZCurveLayer2D::Test::test_init()\n";
         try 
         {
-            layer_ = std::make_unique<WmLinearLayer2D>
+            layer_ = std::make_unique<WmZCurveLayer2D>
                 (std::forward<Types>(args)...);
         }
         catch (std::exception& ex)
@@ -171,7 +169,7 @@ public:
     }
 
     template<typename TStream>
-    TStream& test_get(int64_t idx)
+    TStream& test_get(TStream& stream, int64_t idx)
     {
         stream << "WmZCurveLayer2D::Test::test_get()\n";
         if (layer_)
@@ -200,6 +198,6 @@ private:
     std::unique_ptr<WmZCurveLayer2D> layer_;
 };
 
-} // namespace
+} // namespace wave_model
 
-#endif // WAVE_MODEL_SOLVER_LAYER_H_
+#endif // WAVE_MODEL_LAYER_ZCURVE_LAYER_H_

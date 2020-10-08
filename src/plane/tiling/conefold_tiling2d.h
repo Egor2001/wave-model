@@ -1,21 +1,24 @@
-#ifndef WAVE_MODEL_SOLVER_TILING_H_
-#define WAVE_MODEL_SOLVER_TILING_H_
-
-#include "layer/linear_layer.h"
-#include "layer/zcurve_layer.h"
+#ifndef WAVE_MODEL_TILING_CONEFOLD_TILING2D_H_
+#define WAVE_MODEL_TILING_CONEFOLD_TILING2D_H_
 
 #include <vector>
 #include <algorithm>
 
 #include <cstdint>
 
+namespace wave_model {
+
+template<size_t NR>
 struct WmConeFoldTiling2D
 {
+    static constexpr size_t NTileRank = NR;
+    static constexpr size_t NDepth = 1u << NTileRank;
+
     template<size_t NRank, typename TStencil, typename TLayer>
     static void traverse(const TStencil& stencil, TLayer* layers) noexcept
     {
-        int64_t x_off = TLayer::off_right<NRank>(0, 1);
-        int64_t y_off = TLayer::off_bottom<NRank>(0, 1);
+        int64_t x_off = TLayer::template off_right<NRank>(0, 1);
+        int64_t y_off = TLayer::template off_bottom<NRank>(0, 1);
 
         // TODO: to distinguish between the different fold types
         proc_fold<NRank>(x_off + y_off, stencil, layers);
@@ -34,30 +37,35 @@ struct WmConeFoldTiling2D
 
         if constexpr (NRank == 0u)
         {
-            layers[0][idx] = stencil.apply(idx, layers);
+            stencil.apply(idx, layers);
         }
         else
         {
             // TODO: to optimize for z-order case
-            int64_t x_off = TLayer::off_right<NRank - 1>(idx, 1);
-            int64_t y_off = TLayer::off_bottom<NRank - 1>(idx, 1);
+            int64_t x_off = TLayer::template off_right<NRank - 1>(idx, 1);
+            int64_t y_off = TLayer::template off_bottom<NRank - 1>(idx, 1);
 
             proc_fold<NRank - 1>(idx + x_off + y_off, stencil, layers);
             proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
             proc_fold<NRank - 1>(idx + y_off,         stencil, layers);
             proc_fold<NRank - 1>(idx,                 stencil, layers);
 
-            ++layers;
-            idx += x_off + y_off;
-            x_off = TLayer::off_right<NRank - 1>(idx, 1);
-            y_off = TLayer::off_bottom<NRank - 1>(idx, 1);
+            if constexpr (NRank <= NTileRank)
+            {
+                layers += (1 << (NRank - 1));
+                idx += x_off + y_off;
+                x_off = TLayer::template off_right<NRank - 1>(idx, 1);
+                y_off = TLayer::template off_bottom<NRank - 1>(idx, 1);
 
-            proc_fold<NRank - 1>(idx + x_off + y_off, stencil, layers);
-            proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
-            proc_fold<NRank - 1>(idx + y_off,         stencil, layers);
-            proc_fold<NRank - 1>(idx,                 stencil, layers);
+                proc_fold<NRank - 1>(idx + x_off + y_off, stencil, layers);
+                proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
+                proc_fold<NRank - 1>(idx + y_off,         stencil, layers);
+                proc_fold<NRank - 1>(idx,                 stencil, layers);
+            }
         }
     }
 };
 
-#endif // WAVE_MODEL_SOLVER_TILING_H_
+} // namespace wave_model
+
+#endif // WAVE_MODEL_TILING_CONEFOLD_TILING2D_H_

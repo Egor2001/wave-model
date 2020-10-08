@@ -1,5 +1,5 @@
-#ifndef WAVE_MODEL_SOLVER_LAYER_H_
-#define WAVE_MODEL_SOLVER_LAYER_H_
+#ifndef WAVE_MODEL_LAYER_LINEAR_LAYER2D_H_
+#define WAVE_MODEL_LAYER_LINEAR_LAYER2D_H_
 
 #include <vector>
 #include <memory>
@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace {
+namespace wave_model {
 
 // TODO: border & PML
 template<class TD, size_t ND>
@@ -50,14 +50,12 @@ public:
     }
     //------------------------------------------------------------ 
 
-    explicit WmLayer2D(double length):
-        length_(length),
-        data_vec_(NScale * NScale)
+    WmLinearLayer2D():
+        data_vec_(NDomainLength * NDomainLength)
     {}
 
     template<class FInitFunc>
-    WmLayer2D(double length, FInitFunc func):
-        WmLayer2D(length)
+    void init(double length, FInitFunc func)
     {
         double scale_factor = length / NDomainLength;
 
@@ -72,11 +70,11 @@ public:
         }
     }
 
-    WmLayer2D(const WmLayer2D&) = delete;
-    WmLayer2D& operator = (const WmLayer2D&) = delete;
+    WmLinearLayer2D(const WmLinearLayer2D&) = delete;
+    WmLinearLayer2D& operator = (const WmLinearLayer2D&) = delete;
 
-    WmLayer2D(WmLayer2D&&) noexcept = default;
-    WmLayer2D& operator = (WmLayer2D&&) noexcept = default;
+    WmLinearLayer2D(WmLinearLayer2D&&) noexcept = default;
+    WmLinearLayer2D& operator = (WmLinearLayer2D&&) noexcept = default;
 
     TData& operator [] (uint64_t idx) noexcept
     {
@@ -88,16 +86,15 @@ public:
 
     const TData& operator [] (uint64_t idx) const noexcept
     {
-        return const_cast<WmLayer2D*>(this)->operator[](idx);
+        return const_cast<WmLinearLayer2D*>(this)->operator[](idx);
     }
 
 private:
-    double length_;
     std::vector<TData> data_vec_;
 };
 
-template<class T, size_t ND, size_t NB>
-class WmLayer2D<T, ND, NB>::Test
+template<class TD, size_t ND>
+class WmLinearLayer2D<TD, ND>::Test
 {
 public:
     Test() = default;
@@ -136,7 +133,7 @@ public:
     }
 
     template<typename TStream>
-    TStream& test_get(int64_t idx)
+    TStream& test_get(TStream& stream, int64_t idx)
     {
         stream << "WmZCurveLayer2D::Test::test_get()\n";
         if (layer_)
@@ -162,9 +159,9 @@ public:
     }
 
 private:
-    std::unique_ptr<WmZCurveLayer2D> layer_;
+    std::unique_ptr<WmLinearLayer2D> layer_;
 };
 
-} // namespace
+} // namespace wave_model
 
-#endif // WAVE_MODEL_SOLVER_LAYER_H_
+#endif // WAVE_MODEL_LAYER_LINEAR_LAYER2D_H_
