@@ -5,12 +5,13 @@
 
 void test_core(double factor, double dspace)
 {
-    using TLayer = WmLayer2D<WmBasicWaveData, 64>;
+    using TLayer = WmLayer2D<WmBasicWaveData, 128>;
     using TStencil = WmBasicWaveStencil;
     static constexpr int64_t NSize = static_cast<int64_t>(TLayer::NSize);
 
-    double dtime = dspace / (factor * 2.0);
+    double dtime = dspace / (factor * 16.0);
 
+    // cosine hat
     auto init_func = [factor, dspace]
         (int64_t x_idx, int64_t y_idx) -> WmBasicWaveData
     {
@@ -20,7 +21,7 @@ void test_core(double factor, double dspace)
 
         return {
             .factor = factor,
-            .intencity = sin(r) / (r + 1.0)
+            .intencity = (cos(r * 4.0) + 1.0) / (r + 1.0)
         };
     }; 
 

@@ -110,9 +110,8 @@ public:
         { .depth = 2u, .x_diff = 0,  .y_diff = 0 }
     };
 
-    WmBasicWaveStencil(double dspace, double dtime, size_t accuracy = 2):
-        dspace_(dspace), dtime_(dtime),
-        accuracy_(accuracy)
+    WmBasicWaveStencil(double dspace, double dtime):
+        dspace_(dspace), dtime_(dtime)
     {}
 
     // TODO: to restrict to the RandomAccessIterator
@@ -153,7 +152,6 @@ public:
 
 private:
     double dspace_, dtime_;
-    size_t accuracy_;
 };
 
 template<class T, size_t N>
