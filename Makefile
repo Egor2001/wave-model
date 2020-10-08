@@ -17,7 +17,7 @@ endif
 
 .PHONY: run clean
 
-all: bin $(OBJFILES)
+dumb: bin $(OBJFILES)
 	$(LD) $(LFLAGS) $(OBJFILES) -o $(TARGET)
 
 obj/main.o: obj src/main.cpp

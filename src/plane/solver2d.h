@@ -24,9 +24,9 @@ class WmSolver2D
 public:
     static constexpr size_t NRank = NR;
 
-    using TStencil = TS; // WmBasicWaveStencil2D;
-    using TTiling = TT; // WmConeFoldTiling2D<NTileRank>
-    using TLayer = TL<typename TStencil::TData, 1ull << NRank>; // WmZCurveLayer2D
+    using TStencil = TS;
+    using TTiling = TT;
+    using TLayer = TL<typename TStencil::TData, 1ull << NRank>;
 
     static constexpr size_t NTileRank = TTiling::NTileRank;
     static constexpr size_t NSize = TLayer::NDomainLength;

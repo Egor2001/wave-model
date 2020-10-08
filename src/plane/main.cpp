@@ -13,7 +13,9 @@ int main()
         }; 
     };
 
-    WmSolver2D<WmBasicWaveStencil2D, WmConeFoldTiling2D<2>, WmZCurveLayer2D, 4> 
+    WmSolver2D<WmBasicWaveStencil2D, 
+               WmConeFoldTiling2D<1>, 
+               WmZCurveLayer2D, 2> 
         solver(10.0, 0.1, init_func);
 
     solver.advance(1);

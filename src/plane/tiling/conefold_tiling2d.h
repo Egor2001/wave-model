@@ -46,8 +46,8 @@ struct WmConeFoldTiling2D
             int64_t y_off = TLayer::template off_bottom<NRank - 1>(idx, 1);
 
             proc_fold<NRank - 1>(idx + x_off + y_off, stencil, layers);
-            proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
             proc_fold<NRank - 1>(idx + y_off,         stencil, layers);
+            proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
             proc_fold<NRank - 1>(idx,                 stencil, layers);
 
             if constexpr (NRank <= NTileRank)
@@ -58,8 +58,8 @@ struct WmConeFoldTiling2D
                 y_off = TLayer::template off_bottom<NRank - 1>(idx, 1);
 
                 proc_fold<NRank - 1>(idx + x_off + y_off, stencil, layers);
-                proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
                 proc_fold<NRank - 1>(idx + y_off,         stencil, layers);
+                proc_fold<NRank - 1>(idx + x_off,         stencil, layers);
                 proc_fold<NRank - 1>(idx,                 stencil, layers);
             }
         }

@@ -1,6 +1,7 @@
 # wave-model
 bin/
 obj/
+build/
 test/
 tags
 *.tags
