@@ -17,17 +17,18 @@
 
 namespace wave_model {
 
-template<size_t NR>
+template<typename TS, typename TT, 
+         template<typename, size_t> typename TL, size_t NR>
 class WmSolver2D
 {
 public:
     static constexpr size_t NRank = NR;
-    static constexpr size_t NTileRank = 4;
 
-    using TStencil = WmBasicWaveStencil2D;
-    using TTiling = WmConeFoldTiling2D<NTileRank>;
-    using TLayer = WmZCurveLayer2D<TStencil::TData, 1ull << NRank>;
+    using TStencil = TS; // WmBasicWaveStencil2D;
+    using TTiling = TT; // WmConeFoldTiling2D<NTileRank>
+    using TLayer = TL<typename TStencil::TData, 1ull << NRank>; // WmZCurveLayer2D
 
+    static constexpr size_t NTileRank = TTiling::NTileRank;
     static constexpr size_t NSize = TLayer::NDomainLength;
     static constexpr size_t NDepth = TStencil::NDepth + TTiling::NDepth;
 
@@ -51,7 +52,8 @@ public:
         for (; proc_idx < proc_cnt; proc_idx += TTiling::NDepth)
         {
             // make computations for TTiling::NDepth layers
-            TTiling::traverse<NRank>(stencil_, layers_arr_ + TStencil::NDepth);
+            TTiling::template traverse<NRank>
+                (stencil_, layers_arr_ + TStencil::NDepth);
 
             // rotate right to emulate dynamic programming with limited memory
             std::rotate(std::rbegin(layers_arr_), 

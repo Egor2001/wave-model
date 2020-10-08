@@ -33,52 +33,40 @@ public:
     int64_t off_top(uint64_t idx, uint64_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
-        // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
-        // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
-
         return static_cast<int64_t>(
-                (((idx | (ZOrderMask << 1)) - NOffset * ZOffsetArr[cnt]) & 
-                (ZOrderMask << 1)) | (idx & ZOrderMask)
-                ) - static_cast<int64_t>(idx);
+                ((idx & (ZOrderMask << 1)) - 
+                 2 * NOffset * ZOffsetArr[cnt]) & (ZOrderMask << 1)
+                ) - static_cast<int64_t>(idx & (ZOrderMask << 1));
     }
 
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_bottom(uint64_t idx, uint64_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
-        // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
-        // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
-
         return static_cast<int64_t>(
-                (((idx & ZOrderMask) + NOffset * ZOffsetArr[cnt]) & 
-                (ZOrderMask << 1)) | (idx & ZOrderMask)
-                ) - static_cast<int64_t>(idx);
+                ((idx | ZOrderMask) + 
+                 2 * NOffset * ZOffsetArr[cnt]) & (ZOrderMask << 1)
+                ) - static_cast<int64_t>(idx & (ZOrderMask << 1));
     }
 
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_left(uint64_t idx, uint64_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
-        // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
-        // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
-
         return static_cast<int64_t>(
-                (((idx & ZOrderMask) - NOffset * ZOffsetArr[cnt]) & 
-                ZOrderMask) | (idx & (ZOrderMask << 1))
-                ) - static_cast<int64_t>(idx);
+                ((idx & ZOrderMask) - 
+                 NOffset * ZOffsetArr[cnt]) & ZOrderMask
+                ) - static_cast<int64_t>(idx & ZOrderMask);
     }
 
     template<size_t NCellRank> [[nodiscard]] static constexpr
     int64_t off_right(uint64_t idx, uint64_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
-        // static_assert(NCellRank < NQuadRank, "NCellRank is too big");
-        // assert(cnt < sizeof(sizeof(ZOffsetArr)/sizeof(*ZOffsetArr)));
-
         return static_cast<int64_t>(
-                (((idx | (ZOrderMask << 1)) + NOffset * ZOffsetArr[cnt]) & 
-                ZOrderMask) | (idx & (ZOrderMask << 1))
-                ) - static_cast<int64_t>(idx);
+                ((idx | (ZOrderMask << 1)) + 
+                 NOffset * ZOffsetArr[cnt]) & ZOrderMask
+                ) - static_cast<int64_t>(idx & ZOrderMask);
     }
     //------------------------------------------------------------ 
 
