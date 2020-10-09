@@ -79,20 +79,21 @@ public:
     {
         double scale_factor = length / NDomainLength;
 
-        int64_t idx = 0;
-        for (uint64_t y_idx = 0; y_idx < NDomainLength; ++y_idx)
+        int64_t row_idx = 0;
+        for (int64_t y_idx = 0; y_idx < NDomainLength; ++y_idx)
         {
-            for (uint64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
+            int64_t idx = row_idx;
+            for (int64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
             {
-                double x = x_idx - NDomainLength / 2;
-                double y = y_idx - NDomainLength / 2;
+                double x = (x_idx - NDomainLength / 2) * scale_factor;
+                double y = (y_idx - NDomainLength / 2) * scale_factor;
 
                 data_vec_[idx] = func(x, y);
 
                 idx += off_right<0>(idx, 1);
             }
 
-            idx = off_bottom<0>(idx, 1);
+            row_idx += off_bottom<0>(row_idx, 1);
         }
     }
 

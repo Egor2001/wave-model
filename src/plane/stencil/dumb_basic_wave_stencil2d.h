@@ -28,38 +28,24 @@ public:
         dspace_(dspace), dtime_(dtime)
     {}
 
-    // TODO: to create enum for sides
-    template<int NXSide, int NYSide, typename TLayer>
+    template<typename TLayer>
     void apply(int64_t idx, TLayer* layers) const
     {
         int64_t add_y = TLayer::template off_top<0>(idx, 1);
         int64_t add_x = TLayer::template off_left<0>(idx, 1);
 
         idx += add_x + add_y;
+        add_y = -add_y, add_x = -add_x;
 
-        // TODO: to compare with enum
-        if constexpr (NXSide > 0) add_x = 0;
-        else add_x = -add_x;
+        int64_t sub_y = TLayer::template off_top<0>(idx, 1);
+        int64_t sub_x = TLayer::template off_left<0>(idx, 1);
 
-        if constexpr (NYSide > 0) add_y = 0;
-        else add_y = -add_y;
-
-        int64_t sub_x = 0;
-        int64_t sub_y = 0;
-
-        // TODO: to compare with enum
-        if constexpr (NXSide >= 0) 
-            sub_x = TLayer::template off_left<0>(idx, 1);
-
-        if constexpr (NYSide >= 0) 
-            sub_y = TLayer::template off_top<0>(idx, 1);
-
+        /*
         // TODO: to dittinguish between x and y
         double inv_dspace = 1.0 / dspace_;
         double courant = layers[-1][idx].factor * dtime_ * inv_dspace;
         double courant2 = courant * courant;
 
-        /*
         // TODO: to distinguish between x and y
         layers[0][idx] = {
             .factor = 
