@@ -1,6 +1,8 @@
 #ifndef WAVE_MODEL_LAYER_LINEAR_LAYER2D_H_
 #define WAVE_MODEL_LAYER_LINEAR_LAYER2D_H_
 
+#include "logging/macro.h"
+
 #include <vector>
 #include <memory>
 #include <algorithm>

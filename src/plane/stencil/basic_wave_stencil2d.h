@@ -1,12 +1,16 @@
 #ifndef WAVE_MODEL_STENCIL_BASIC_WAVE_STENCIL2D_H_
 #define WAVE_MODEL_STENCIL_BASIC_WAVE_STENCIL2D_H_
 
+#include "logging/macro.h"
+
 #include <vector>
 #include <algorithm>
 #include <type_traits>
 
 #include <cstdint>
 #include <cstddef>
+
+#include <cinttypes>
 #include <cstdio>
 
 namespace wave_model {
@@ -54,12 +58,12 @@ public:
         if constexpr (NYSide >= 0) 
             sub_y = TLayer::template off_top<0>(idx, 1);
 
+        /*
         // TODO: to dittinguish between x and y
         double inv_dspace = 1.0 / dspace_;
         double courant = layers[-1][idx].factor * dtime_ * inv_dspace;
         double courant2 = courant * courant;
 
-        /*
         // TODO: to distinguish between x and y
         layers[0][idx] = {
             .factor = 
@@ -76,7 +80,7 @@ public:
         };
         */
 
-        printf("apply to idx %#llx\n", idx);
+        printf("apply to idx %#" PRIx64 "\n", idx);
     }
 
 private:

@@ -1,6 +1,8 @@
 #ifndef WAVE_MODEL_TILING_CONEFOLD_TILING2D_H_
 #define WAVE_MODEL_TILING_CONEFOLD_TILING2D_H_
 
+#include "logging/macro.h"
+
 #include <vector>
 #include <algorithm>
 
@@ -23,6 +25,8 @@ namespace wave_model {
 template<size_t NR>
 struct WmConeFoldTiling2D
 {
+    struct Test;
+
     static constexpr size_t NTileRank = NR;
     static constexpr size_t NDepth = 1u << NTileRank;
 
@@ -94,39 +98,39 @@ struct WmConeFoldTiling2D
         else
         {
             // TODO: to optimize for z-order case
-            int64_t x_off = TLayer::template off_right<NLess>(idx, 1);
-            int64_t y_off = TLayer::template off_bottom<NLess>(idx, 1);
+            int64_t x_off_1 = TLayer::template off_left<NLess>(idx, 1);
+            int64_t y_off_1 = TLayer::template off_top<NLess>(idx, 1);
+            int64_t x_off_2 = TLayer::template off_left<NLess>(idx, 2);
+            int64_t y_off_2 = TLayer::template off_top<NLess>(idx, 2);
 
             proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][1]>
-                (idx + x_off + y_off, stencil, layers); // XY
+                (idx + x_off_1 + y_off_1, stencil, layers); // XY
 
             proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][1]>
-                (idx + y_off, stencil, layers); // 0Y
+                (idx + x_off_2 + y_off_1, stencil, layers); //0Y
 
             proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][0]>
-                (idx + x_off, stencil, layers); //X0
+                (idx + x_off_1 + y_off_2, stencil, layers); // X0
 
             proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][0]>
-                (idx, stencil, layers); // 00
+                (idx + x_off_2 + y_off_2, stencil, layers); // 00
 
+            // upper layer
             if constexpr (NRank <= NTileRank)
             {
                 layers += (1 << (NLess));
-                idx += x_off + y_off;
-                x_off = TLayer::template off_right<NLess>(idx, 1);
-                y_off = TLayer::template off_bottom<NLess>(idx, 1);
 
                 proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][3]>
-                    (idx + x_off + y_off, stencil, layers); // XY
+                    (idx, stencil, layers); // XY
 
                 proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][3]>
-                    (idx + y_off, stencil, layers); // 0Y
+                    (idx + x_off_1, stencil, layers); //0Y
 
                 proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][2]>
-                    (idx + x_off, stencil, layers); //X0
+                    (idx + y_off_1, stencil, layers); // X0
 
                 proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][2]>
-                    (idx, stencil, layers); // 00
+                    (idx + x_off_1 + y_off_1, stencil, layers); // 00
             }
         }
     }
@@ -147,6 +151,45 @@ struct WmConeFoldTiling2D
             static_cast<int>(NYType) - static_cast<int>(TYPE_C);
 
         stencil.template apply<NXSide, NYSide>(idx, layers);
+    }
+};
+
+template<size_t NR>
+struct WmConeFoldTiling2D<NR>::Test
+{
+    template<typename TStream>
+    struct TestStencil
+    {
+        struct TData {};
+
+        explicit TestStencil(TStream& stream_ref):
+            stream(stream_ref)
+        {}
+
+        template<int NXSide, int NYSide, typename TLayer>
+        void apply(size_t idx, TLayer* layer) const
+        {
+            stream << "TestStencil::apply<" << 
+                NXSide << ", " << NYSide << ", " << "$TLayer" << 
+                ">(" << idx << ", $layers)\n";
+        }
+
+        TStream& stream;
+    };
+
+    template<size_t NRank, template<typename, size_t> 
+        typename TLayer, typename TStream>
+    static TStream& test_traverse(TStream& stream) noexcept
+    {
+        stream << "BEGIN WmConeFoldTiling2D::Test::test_traverse()\n"; 
+        TestStencil<TStream> stencil(stream);
+        static TLayer<typename TestStencil<TStream>::TData, 1u << NRank> 
+            layers[WmConeFoldTiling2D::NDepth] = {};
+
+        WmConeFoldTiling2D::traverse<NRank>(stencil, layers);
+        stream << "END WmConeFoldTiling2D::Test::test_traverse()\n";
+
+        return stream;
     }
 };
 

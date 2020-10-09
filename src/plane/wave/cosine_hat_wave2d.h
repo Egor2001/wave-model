@@ -1,6 +1,8 @@
 #ifndef WAVE_MODEL_WAVE_COSINE_HAT_WAVE2D_H
 #define WAVE_MODEL_WAVE_COSINE_HAT_WAVE2D_H
 
+#include "logging/macro.h"
+
 #include <cmath>
 
 namespace wave_model {

@@ -1,6 +1,8 @@
 #ifndef WAVE_MODEL_WAVE_GAUSSIAN_WAVE2D_H_
 #define WAVE_MODEL_WAVE_GAUSSIAN_WAVE2D_H_
 
+#include "logging/macro.h"
+
 #include <cmath>
 
 namespace wave_model {

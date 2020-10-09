@@ -1,6 +1,8 @@
 #ifndef WAVE_MODEL_LAYER_ZCURVE_LAYER_H_
 #define WAVE_MODEL_LAYER_ZCURVE_LAYER_H_
 
+#include "logging/macro.h"
+
 #include <vector>
 #include <algorithm>
 #include <type_traits>
