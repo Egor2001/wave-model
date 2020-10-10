@@ -171,19 +171,28 @@ struct WmZCurveLayer2D<TD, ND>::Test
         static constexpr size_t NCnt = WmZCurveLayer2D::ZOffsetArrSize / 4;
 
         // TODO: to refactor with static_assert
+        
+        [[maybe_unused]]
         int64_t x_inc = WmZCurveLayer2D::off_right<NCellRank>(1, NCnt);
+        [[maybe_unused]]
         int64_t x_dec = WmZCurveLayer2D::off_left<NCellRank>(1 + x_inc, NCnt);
         WM_ASSERT(x_inc + x_dec == 0, "TEST FAILED");
 
+        [[maybe_unused]]
         int64_t y_inc = WmZCurveLayer2D::off_bottom<NCellRank>(1, NCnt);
+        [[maybe_unused]]
         int64_t y_dec = WmZCurveLayer2D::off_top<NCellRank>(1 + y_inc, NCnt);
         WM_ASSERT(y_inc + y_dec == 0, "TEST FAILED");
 
+        [[maybe_unused]]
         int64_t x_dup_rnk = WmZCurveLayer2D::off_right<NCellRank + 1>(1, NCnt);
+        [[maybe_unused]]
         int64_t x_dup_cnt = WmZCurveLayer2D::off_right<NCellRank>(1, NCnt * 2);
         WM_ASSERT(x_dup_rnk == x_dup_cnt, "TEST FAILED");
 
+        [[maybe_unused]]
         int64_t y_dup_rnk = WmZCurveLayer2D::off_bottom<NCellRank + 1>(1, NCnt);
+        [[maybe_unused]]
         int64_t y_dup_cnt = WmZCurveLayer2D::off_bottom<NCellRank>(1, NCnt * 2);
         WM_ASSERT(y_dup_rnk == y_dup_cnt, "TEST FAILED");
 

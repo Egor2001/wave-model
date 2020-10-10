@@ -58,7 +58,6 @@ public:
         if constexpr (NYSide >= 0) 
             sub_y = TLayer::template off_top<0>(idx, 1);
 
-        /*
         // TODO: to dittinguish between x and y
         double inv_dspace = 1.0 / dspace_;
         double courant = layers[-1][idx].factor * dtime_ * inv_dspace;
@@ -78,9 +77,8 @@ public:
                   2.0 * layers[-1][idx].intencity)
                  ) * courant2
         };
-        */
 
-        printf("apply to idx %#" PRIx64 "\n", idx);
+        // printf("apply to idx %#" PRIx64 "\n", idx);
     }
 
 private:
