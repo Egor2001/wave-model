@@ -27,10 +27,6 @@ that vectorization is better for linear layout,
 so that cache misses may be not crucial in this case.
 (this guess needs to be verified).
 
-#### Intel(R) Core(TM) i3-3110M Single-Threaded
-linear data layout
-Z-order data layout
-
 ## build
 ```console
 $ mkdir build && cd build
