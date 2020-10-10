@@ -22,7 +22,7 @@ data layout | rd rate | wr rate
 linear | 7.5 % | 14.6 %
 Z-order | 0.8 % | 6.1 %
 
-One possible explanation of these incorrelation is 
+One possible explanation of this incorrelation is 
 that vectorization is better for linear layout, 
 so that cache misses may be not crucial in this case.
 (this guess needs to be verified).
