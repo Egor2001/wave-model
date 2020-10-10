@@ -18,7 +18,7 @@ template<class TD, size_t ND>
 class WmLinearLayer2D
 {
 public:
-    class Test;
+    struct Test;
 
     using TData = TD;
     static constexpr int64_t NDomainLength = ND;
@@ -78,15 +78,15 @@ public:
     WmLinearLayer2D(WmLinearLayer2D&&) noexcept = default;
     WmLinearLayer2D& operator = (WmLinearLayer2D&&) noexcept = default;
 
-    TData& operator [] (uint64_t idx) noexcept
+    [[nodiscard]] inline TData& operator [] (int64_t idx) noexcept
     {
-        WM_ASSERT(idx < NDomainLength * NDomainLength, 
+        WM_ASSERT(0 <= idx && idx < NDomainLength * NDomainLength, 
                   "idx is out of bounds");
 
         return data_vec_[idx];
     }
 
-    const TData& operator [] (uint64_t idx) const noexcept
+    [[nodiscard]] inline const TData& operator [] (int64_t idx) const noexcept
     {
         return const_cast<WmLinearLayer2D*>(this)->operator[](idx);
     }
@@ -95,73 +95,111 @@ private:
     std::vector<TData> data_vec_;
 };
 
-template<class TD, size_t ND>
-class WmLinearLayer2D<TD, ND>::Test
+// TODO: to create templatized testing class for any layer type
+// to avoid copy-paste
+template<typename TD, size_t ND>
+struct WmLinearLayer2D<TD, ND>::Test
 {
-public:
-    Test() = default;
-
-    Test             (const Test&) = delete;
-    Test& operator = (const Test&) = delete;
-
-    template<typename TStream, typename... Types>
-    TStream& test_init(TStream& stream, Types&&... args)
+    template<typename TStream>
+    struct TestInitFunc
     {
-        stream << "WmZCurveLayer2D::Test::test_init()\n";
-        try 
+        explicit TestInitFunc(TStream& stream_ref, size_t* call_cnt_ptr):
+            stream(stream_ref),
+            call_cnt(call_cnt_ptr)
+        {}
+
+        [[nodiscard]]
+        WmLinearLayer2D::TData operator () (double x, double y) noexcept
         {
-            layer_ = std::make_unique<WmLinearLayer2D>
-                (std::forward<Types>(args)...);
+            stream << "TestInitFunc(" << x << ", " << y << ")\n";
+            ++(*call_cnt);
+
+            return {};
         }
-        catch (std::exception& ex)
-        {
-            stream << "WmZCurveLayer2D::Test failed: " << ex.what() << "\n";
-        }
-        catch (...)
-        {
-            stream << "WmZCurveLayer2D::Test failed: UNKNOWN ERROR\n";
-        }
+
+        TStream& stream;
+        size_t* call_cnt;
+    };
+
+    template<size_t NCellRank, typename TStream>
+    static TStream& test_off(TStream& stream)
+    {
+        stream << "BEGIN WmLinearLayer2D<$TData, " << 
+            WmLinearLayer2D::NDomainLength << 
+            ">::test_off<" << NCellRank << ">()\n";
+
+        WM_ASSERT(WmLinearLayer2D::off_bottom<NCellRank>(0, 1) == 
+                (1u << NCellRank) * WmLinearLayer2D::NDomainLength, 
+                "TEST FAILED");
+        WM_ASSERT(WmLinearLayer2D::off_right<NCellRank>(0, 1) == 
+                (1u << NCellRank), "TEST FAILED");
+
+        WM_ASSERT(WmLinearLayer2D::off_bottom<NCellRank>(0, 1) == 
+                -WmLinearLayer2D::off_top<NCellRank>(0, 1), "TEST FAILED");
+        WM_ASSERT(WmLinearLayer2D::off_right<NCellRank>(0, 1) == 
+                -WmLinearLayer2D::off_left<NCellRank>(0, 1), "TEST FAILED");
+
+        WM_ASSERT(WmLinearLayer2D::off_bottom<NCellRank>(0, 1) * 2 == 
+                WmLinearLayer2D::off_bottom<NCellRank>(0, 2), "TEST FAILED");
+        WM_ASSERT(WmLinearLayer2D::off_right<NCellRank>(0, 1) * 2 == 
+                WmLinearLayer2D::off_right<NCellRank>(0, 2), "TEST FAILED");
+
+        stream << "END WmLinearLayer2D<$TData, " << 
+            WmLinearLayer2D::NDomainLength << 
+            ">::test_off<" << NCellRank << ">()\n";
 
         return stream;
     }
 
     template<typename TStream>
-    TStream& test_release(TStream& stream)
+    static TStream& test_init(TStream& stream)
     {
-        stream << "WmZCurveLayer2D::Test::test_release()\n";
-        layer_.reset();
+        static constexpr size_t NSquare = 
+            WmLinearLayer2D::NDomainLength * WmLinearLayer2D::NDomainLength;
+
+        stream << "BEGIN WmLinearLayer2D<$TData, " << 
+            WmLinearLayer2D::NDomainLength << 
+            ">::test_init()\n";
+
+        WmLinearLayer2D layer;
+
+        size_t call_cnt = 0;
+        TestInitFunc init_func(stream, &call_cnt);
+
+        layer.init(1.0, init_func);
+
+        stream << "CALLED " << call_cnt << "\n";
+        stream << "SQUARE " << NSquare << "\n";
+
+        WM_ASSERT(call_cnt == NSquare, "TEST FAILED");
+
+        stream << "END WmLinearLayer2D<$TData, " << 
+            WmLinearLayer2D::NDomainLength << 
+            ">::test_init()\n";
 
         return stream;
     }
 
     template<typename TStream>
-    TStream& test_get(TStream& stream, int64_t idx)
+    static TStream& test_operator(TStream& stream)
     {
-        stream << "WmZCurveLayer2D::Test::test_get()\n";
-        if (layer_)
-        {
-            try
-            {
-                [[maybe_unused]]
-                auto& data = (*layer_)[idx];
-            }
-            catch (std::exception& ex)
-            {
-                stream << "WmZCurveLayer2D::Test failed: " << ex.what() << "\n";
-            }
-            catch (...)
-            {
-                stream << "WmZCurveLayer2D::Test failed: UNKNOWN ERROR\n";
-            }
-        }
-        else
-        {
-            stream << "WmZCurveLayer2D::Test failed: NULL layer_\n";
-        }
-    }
+        static constexpr size_t NSquare = 
+            WmLinearLayer2D::NDomainLength * WmLinearLayer2D::NDomainLength;
 
-private:
-    std::unique_ptr<WmLinearLayer2D> layer_;
+        stream << "BEGIN WmLinearLayer2D<$TData, " << 
+            WmLinearLayer2D::NDomainLength << 
+            ">::test_operator()\n";
+
+        WmLinearLayer2D layer;
+        static_cast<void>(layer[0]);
+        static_cast<void>(layer[NSquare - 1]);
+
+        stream << "END WmLinearLayer2D<$TData, " << 
+            WmLinearLayer2D::NDomainLength << 
+            ">::test_operator()\n";
+
+        return stream;
+    }
 };
 
 } // namespace wave_model

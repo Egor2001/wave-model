@@ -29,42 +29,52 @@ public:
     static constexpr uint64_t ZOrderMask = 0x5555555555555555;
     // Z-order sequence first 8 values 
     static constexpr uint64_t ZOffsetArr[] = { 0, 1, 4, 5, 16, 17, 20, 21 };
+    static constexpr uint64_t ZOffsetArrSize = 
+        sizeof(ZOffsetArr) / sizeof(ZOffsetArr[0]);
 
     //------------------------------------------------------------ 
-    template<size_t NCellRank> [[nodiscard]] static constexpr
+    template<size_t NCellRank> [[nodiscard]] static constexpr inline
     int64_t off_top(uint64_t idx, uint64_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
+        WM_ASSERT(cnt < ZOffsetArrSize, "cnt is too big");
+
         return static_cast<int64_t>(
                 ((idx & (ZOrderMask << 1)) - 
                  2 * NOffset * ZOffsetArr[cnt]) & (ZOrderMask << 1)
                 ) - static_cast<int64_t>(idx & (ZOrderMask << 1));
     }
 
-    template<size_t NCellRank> [[nodiscard]] static constexpr
+    template<size_t NCellRank> [[nodiscard]] static constexpr inline
     int64_t off_bottom(uint64_t idx, uint64_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
+        WM_ASSERT(cnt < ZOffsetArrSize, "cnt is too big");
+
         return static_cast<int64_t>(
                 ((idx | ZOrderMask) + 
                  2 * NOffset * ZOffsetArr[cnt]) & (ZOrderMask << 1)
                 ) - static_cast<int64_t>(idx & (ZOrderMask << 1));
     }
 
-    template<size_t NCellRank> [[nodiscard]] static constexpr
-    int64_t off_left(uint64_t idx, uint64_t cnt) noexcept
+    template<size_t NCellRank> [[nodiscard]] static constexpr inline
+    int64_t off_left(uint64_t idx, size_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
+        WM_ASSERT(cnt < ZOffsetArrSize, "cnt is too big");
+
         return static_cast<int64_t>(
                 ((idx & ZOrderMask) - 
                  NOffset * ZOffsetArr[cnt]) & ZOrderMask
                 ) - static_cast<int64_t>(idx & ZOrderMask);
     }
 
-    template<size_t NCellRank> [[nodiscard]] static constexpr
-    int64_t off_right(uint64_t idx, uint64_t cnt) noexcept
+    template<size_t NCellRank> [[nodiscard]] static constexpr inline
+    int64_t off_right(uint64_t idx, size_t cnt) noexcept
     {
         constexpr uint64_t NOffset = (1 << NCellRank) * (1 << NCellRank);
+        WM_ASSERT(cnt < ZOffsetArrSize, "cnt is too big");
+
         return static_cast<int64_t>(
                 ((idx | (ZOrderMask << 1)) + 
                  NOffset * ZOffsetArr[cnt]) & ZOrderMask
@@ -90,6 +100,9 @@ public:
                 double x = (x_idx - NDomainLength / 2) * scale_factor;
                 double y = (y_idx - NDomainLength / 2) * scale_factor;
 
+                WM_ASSERT(0 <= idx && idx < NDomainLength * NDomainLength,
+                          "idx is out of bounds");
+
                 data_vec_[idx] = func(x, y);
 
                 idx += off_right<0>(idx, 1);
@@ -105,13 +118,15 @@ public:
     WmZCurveLayer2D(WmZCurveLayer2D&&) noexcept = default;
     WmZCurveLayer2D& operator = (WmZCurveLayer2D&&) noexcept = default;
 
-    // TODO: to implement in terms of single values instead of quads
-    TData& operator [] (uint64_t idx)
+    [[nodiscard]] inline TData& operator [] (int64_t idx)
     {
+        WM_ASSERT(0 <= idx && idx < NDomainLength * NDomainLength,
+                  "idx is out of bounds");
+
         return data_vec_[idx];
     }
 
-    const TData& operator [] (uint64_t idx) const
+    [[nodiscard]] inline const TData& operator [] (int64_t idx) const
     {
         return const_cast<WmZCurveLayer2D*>(this)->operator[](idx);
     }
@@ -120,73 +135,114 @@ private:
     std::vector<TData> data_vec_;
 };
 
-template<class TD, size_t ND>
-class WmZCurveLayer2D<TD, ND>::Test
+// TODO: to create templatized testing class for any layer type
+// to avoid copy-paste
+template<typename TD, size_t ND>
+struct WmZCurveLayer2D<TD, ND>::Test
 {
-public:
-    Test() = default;
-
-    Test             (const Test&) = delete;
-    Test& operator = (const Test&) = delete;
-
-    template<typename TStream, typename... Types>
-    TStream& test_init(TStream& stream, Types&&... args)
+    template<typename TStream>
+    struct TestInitFunc
     {
-        stream << "WmZCurveLayer2D::Test::test_init()\n";
-        try 
+        explicit TestInitFunc(TStream& stream_ref, size_t* call_cnt_ptr):
+            stream(stream_ref),
+            call_cnt(call_cnt_ptr)
+        {}
+
+        [[nodiscard]]
+        WmZCurveLayer2D::TData operator () (double x, double y) noexcept
         {
-            layer_ = std::make_unique<WmZCurveLayer2D>
-                (std::forward<Types>(args)...);
+            stream << "TestInitFunc(" << x << ", " << y << ")\n";
+            ++(*call_cnt);
+
+            return {};
         }
-        catch (std::exception& ex)
-        {
-            stream << "WmZCurveLayer2D::Test failed: " << ex.what() << "\n";
-        }
-        catch (...)
-        {
-            stream << "WmZCurveLayer2D::Test failed: UNKNOWN ERROR\n";
-        }
+
+        TStream& stream;
+        size_t* call_cnt;
+    };
+
+    template<size_t NCellRank, typename TStream>
+    static TStream& test_off(TStream& stream)
+    {
+        stream << "BEGIN WmZCurveLayer2D<$TData, " << 
+            WmZCurveLayer2D::NDomainLength << 
+            ">::test_off<" << NCellRank << ">()\n";
+
+        static constexpr size_t NCnt = WmZCurveLayer2D::ZOffsetArrSize / 4;
+
+        // TODO: to refactor with static_assert
+        int64_t x_inc = WmZCurveLayer2D::off_right<NCellRank>(1, NCnt);
+        int64_t x_dec = WmZCurveLayer2D::off_left<NCellRank>(1 + x_inc, NCnt);
+        WM_ASSERT(x_inc + x_dec == 0, "TEST FAILED");
+
+        int64_t y_inc = WmZCurveLayer2D::off_bottom<NCellRank>(1, NCnt);
+        int64_t y_dec = WmZCurveLayer2D::off_top<NCellRank>(1 + y_inc, NCnt);
+        WM_ASSERT(y_inc + y_dec == 0, "TEST FAILED");
+
+        int64_t x_dup_rnk = WmZCurveLayer2D::off_right<NCellRank + 1>(1, NCnt);
+        int64_t x_dup_cnt = WmZCurveLayer2D::off_right<NCellRank>(1, NCnt * 2);
+        WM_ASSERT(x_dup_rnk == x_dup_cnt, "TEST FAILED");
+
+        int64_t y_dup_rnk = WmZCurveLayer2D::off_bottom<NCellRank + 1>(1, NCnt);
+        int64_t y_dup_cnt = WmZCurveLayer2D::off_bottom<NCellRank>(1, NCnt * 2);
+        WM_ASSERT(y_dup_rnk == y_dup_cnt, "TEST FAILED");
+
+        stream << "END WmZCurveLayer2D<$TData, " << 
+            WmZCurveLayer2D::NDomainLength << 
+            ">::test_off<" << NCellRank << ">()\n";
 
         return stream;
     }
 
     template<typename TStream>
-    TStream& test_release(TStream& stream)
+    static TStream& test_init(TStream& stream)
     {
-        stream << "WmZCurveLayer2D::Test::test_release()\n";
-        layer_.reset();
+        static constexpr size_t NSquare = 
+            WmZCurveLayer2D::NDomainLength * WmZCurveLayer2D::NDomainLength;
+
+        stream << "BEGIN WmZCurveLayer2D<$TData, " << 
+            WmZCurveLayer2D::NDomainLength << 
+            ">::test_init()\n";
+
+        WmZCurveLayer2D layer;
+
+        size_t call_cnt = 0;
+        TestInitFunc init_func(stream, &call_cnt);
+
+        layer.init(1.0, init_func);
+
+        stream << "CALLED " << call_cnt << "\n";
+        stream << "SQUARE " << NSquare << "\n";
+
+        WM_ASSERT(call_cnt == NSquare, "TEST FAILED");
+
+        stream << "END WmZCurveLayer2D<$TData, " << 
+            WmZCurveLayer2D::NDomainLength << 
+            ">::test_init()\n";
 
         return stream;
     }
 
     template<typename TStream>
-    TStream& test_get(TStream& stream, int64_t idx)
+    static TStream& test_operator(TStream& stream)
     {
-        stream << "WmZCurveLayer2D::Test::test_get()\n";
-        if (layer_)
-        {
-            try
-            {
-                [[maybe_unused]]
-                auto& data = (*layer_)[idx];
-            }
-            catch (std::exception& ex)
-            {
-                stream << "WmZCurveLayer2D::Test failed: " << ex.what() << "\n";
-            }
-            catch (...)
-            {
-                stream << "WmZCurveLayer2D::Test failed: UNKNOWN ERROR\n";
-            }
-        }
-        else
-        {
-            stream << "WmZCurveLayer2D::Test failed: NULL layer_\n";
-        }
-    }
+        static constexpr size_t NSquare = 
+            WmZCurveLayer2D::NDomainLength * WmZCurveLayer2D::NDomainLength;
 
-private:
-    std::unique_ptr<WmZCurveLayer2D> layer_;
+        stream << "BEGIN WmZCurveLayer2D<$TData, " << 
+            WmZCurveLayer2D::NDomainLength << 
+            ">::test_operator()\n";
+
+        WmZCurveLayer2D layer;
+        static_cast<void>(layer[0]);
+        static_cast<void>(layer[NSquare - 1]);
+
+        stream << "END WmZCurveLayer2D<$TData, " << 
+            WmZCurveLayer2D::NDomainLength << 
+            ">::test_operator()\n";
+
+        return stream;
+    }
 };
 
 } // namespace wave_model

@@ -1,5 +1,8 @@
 #include "solver2d.h"
+
 #include "test/tiling/conefold_tiling2d_test.h"
+#include "test/layer/linear_layer2d_test.h"
+#include "test/layer/zcurve_layer2d_test.h"
 
 #include <iostream>
 
@@ -7,6 +10,8 @@ using namespace wave_model;
 
 int main()
 {
+    wm_test_linear_layer2d(std::cout);
+    wm_test_zcurve_layer2d(std::cout);
     wm_test_conefold_tiling2d(std::cout);
 
     WmCosineHatWave2D init_wave { .ampl = 1.0, .freq = 0.5 };
