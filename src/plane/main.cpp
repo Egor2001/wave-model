@@ -30,12 +30,18 @@ int main()
         }; 
     };
 
-    WmSolver2D<WmBasicWaveStencil2D, 
-               WmConeFoldTiling2D<3>, 
-               WmZCurveLayer2D, 12> 
-        solver(10.0, 0.1, init_func);
+    static constexpr size_t NTileRank = 2;
+    static constexpr size_t NSideRank = 10;
 
-    solver.advance(1);
+    static constexpr size_t NRunCount = // 1; // for cachegrind benchmark
+        1ull << ((16 - NSideRank) * 2 - NTileRank);
+
+    WmSolver2D<WmBasicWaveStencil2D, 
+               WmConeFoldTiling2D<NTileRank>, 
+               WmLinearLayer2D, NSideRank> 
+        solver(1e6, 0.1, init_func);
+
+    solver.advance(NRunCount);
 
     return 0;
 }
