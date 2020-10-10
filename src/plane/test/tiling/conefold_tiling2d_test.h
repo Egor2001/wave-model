@@ -7,18 +7,14 @@
 
 namespace wave_model {
 
-template<typename TStream>
+template<template<typename, size_t> typename TLayer, typename TStream>
 TStream& wm_test_conefold_tiling2d(TStream& stream)
 {
     static constexpr size_t NTileRank = 2;
     static constexpr size_t NRank = 4;
-    /*
-    WmConeFoldTiling2D<NTileRank>::Test::
-        test_traverse<NRank, WmZCurveLayer2D, TStream>(stream);
-        */
 
     WmConeFoldTiling2D<NTileRank>::Test::
-        test_traverse<NRank, WmLinearLayer2D, TStream>(stream);
+        test_traverse<NRank, TLayer, TStream>(stream);
 
     return stream;
 }

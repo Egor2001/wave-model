@@ -98,22 +98,22 @@ struct WmConeFoldTiling2D
         else
         {
             // TODO: to optimize for z-order case
-            int64_t x_off_1 = TLayer::template off_left<NLess>(idx, 1);
-            int64_t y_off_1 = TLayer::template off_top<NLess>(idx, 1);
-            int64_t x_off_2 = TLayer::template off_left<NLess>(idx, 2);
-            int64_t y_off_2 = TLayer::template off_top<NLess>(idx, 2);
+            int64_t x_dec = TLayer::template off_left<NLess>(idx, 1);
+            int64_t y_dec = TLayer::template off_top<NLess>(idx, 1);
+            int64_t x_inc = TLayer::template off_right<NLess>(idx, 1);
+            int64_t y_inc = TLayer::template off_bottom<NLess>(idx, 1);
 
             proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][1]>
-                (idx + x_off_1 + y_off_1, stencil, layers); // XY
+                (idx, stencil, layers); // XY
 
             proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][1]>
-                (idx + x_off_2 + y_off_1, stencil, layers); //0Y
+                (idx + x_dec, stencil, layers); //0Y
 
             proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][0]>
-                (idx + x_off_1 + y_off_2, stencil, layers); // X0
+                (idx + y_dec, stencil, layers); // X0
 
             proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][0]>
-                (idx + x_off_2 + y_off_2, stencil, layers); // 00
+                (idx + x_dec + y_dec, stencil, layers); // 00
 
             // upper layer
             if constexpr (NRank <= NTileRank)
@@ -121,16 +121,16 @@ struct WmConeFoldTiling2D
                 layers += (1 << (NLess));
 
                 proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][3]>
-                    (idx, stencil, layers); // XY
+                    (idx + x_inc + y_inc, stencil, layers); // XY
 
                 proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][3]>
-                    (idx + x_off_1, stencil, layers); //0Y
+                    (idx + y_inc, stencil, layers); //0Y
 
                 proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][2]>
-                    (idx + y_off_1, stencil, layers); // X0
+                    (idx + x_inc, stencil, layers); // X0
 
                 proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][2]>
-                    (idx + x_off_1 + y_off_1, stencil, layers); // 00
+                    (idx, stencil, layers); // 00
             }
         }
     }
