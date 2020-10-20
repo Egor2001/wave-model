@@ -38,7 +38,7 @@ int main()
 
     WmSolver2D<WmBasicWaveStencil2D, 
                WmConeFoldTiling2D<NTileRank>, 
-               WmLinearLayer2D, NSideRank> 
+               WmZCurveLayer2D, NSideRank> 
         solver(1e6, 0.1, init_func);
 
     solver.advance(NRunCount);
