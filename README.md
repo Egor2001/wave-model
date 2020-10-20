@@ -31,6 +31,7 @@ so that cache misses may be not crucial in this case.
 ```console
 $ mkdir build && cd build
 $ cmake -DCMAKE_BUILD_TYPE=Release
+$ make
 ```
 
 ## contacts
