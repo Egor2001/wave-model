@@ -30,8 +30,13 @@ so that cache misses may be not crucial in this case.
 ## build
 ```console
 $ mkdir build && cd build
-$ cmake -DCMAKE_BUILD_TYPE=Release
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
 $ make
+```
+
+## run
+```console
+$ ./run.sh
 ```
 
 ## contacts
