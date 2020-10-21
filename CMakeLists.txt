@@ -28,7 +28,11 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 
-    add_compile_options(-Weverything -pedantic)
+    add_compile_options(-Weverything -pedantic
+                        -Wno-sign-conversion
+                        -Wno-exit-time-destructors
+                        -Wno-c++98-compat-pedantic
+                        )
 
 else()
     message(FATAL_ERROR 

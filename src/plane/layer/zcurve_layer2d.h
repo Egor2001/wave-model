@@ -17,7 +17,7 @@ template<class TD, size_t ND>
 class WmZCurveLayer2D
 {
 public:
-    class Test;
+    struct Test;
 
     using TData = TD;
     static constexpr int64_t NDomainLength = ND;
@@ -97,8 +97,10 @@ public:
             int64_t idx = row_idx;
             for (int64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
             {
-                double x = (x_idx - NDomainLength / 2) * scale_factor;
-                double y = (y_idx - NDomainLength / 2) * scale_factor;
+                double x = scale_factor * 
+                    static_cast<double>(x_idx - NDomainLength / 2);
+                double y = scale_factor * 
+                    static_cast<double>(y_idx - NDomainLength / 2);
 
                 WM_ASSERT(0 <= idx && idx < NDomainLength * NDomainLength,
                           "idx is out of bounds");

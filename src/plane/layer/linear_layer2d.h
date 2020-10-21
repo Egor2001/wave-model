@@ -64,8 +64,10 @@ public:
         for (int64_t y_idx = 0; y_idx < NDomainLength; ++y_idx)
         for (int64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
         {
-            double x = (x_idx - NDomainLength / 2) * scale_factor;
-            double y = (y_idx - NDomainLength / 2) * scale_factor;
+            double x = scale_factor * 
+                static_cast<double>(x_idx - NDomainLength / 2);
+            double y = scale_factor * 
+                static_cast<double>(y_idx - NDomainLength / 2);
 
             int64_t idx = y_idx * NDomainLength + x_idx;
             data_vec_[idx] = func(x, y);
