@@ -46,7 +46,12 @@ public:
             .init(length_, std::forward<TInitFunc>(init_func));
     }
 
-    const TLayer& advance(size_t proc_cnt)
+    const TLayer& layer() const noexcept
+    {
+        return layers_arr_[TStencil::NDepth - 1];
+    }
+
+    void advance(size_t proc_cnt)
     {
         size_t proc_idx = 0;
         for (; proc_idx < proc_cnt; proc_idx += TTiling::NDepth)
@@ -66,8 +71,6 @@ public:
         std::rotate(std::begin(layers_arr_), 
                     std::begin(layers_arr_) + extra_cnt, 
                     std::end(layers_arr_));
-
-        return layers_arr_[TStencil::NDepth - 1];
     }
 
 private:

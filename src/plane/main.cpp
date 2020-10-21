@@ -73,8 +73,8 @@ int main([[maybe_unused]] int argc,
         test(WmLogger::stream());
     }
 
-    auto& layer = solver.advance(NRunCount);
-    layer.dump(out_stream);
+    solver.advance(NRunCount);
+    solver.layer().dump(out_stream);
 
 #endif // defined(WM_BENCHMARK)
 
