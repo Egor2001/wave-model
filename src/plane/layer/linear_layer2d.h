@@ -28,25 +28,25 @@ public:
 
     //------------------------------------------------------------ 
     template<size_t NCellRank> [[nodiscard]] static constexpr 
-    int64_t off_top(uint64_t idx, uint64_t cnt) noexcept
+    int64_t off_top([[maybe_unused]] uint64_t idx, uint64_t cnt) noexcept
     {
         return -off_bottom<NCellRank>(idx, cnt);
     }
 
     template<size_t NCellRank> [[nodiscard]] static constexpr 
-    int64_t off_bottom(uint64_t idx, uint64_t cnt) noexcept
+    int64_t off_bottom([[maybe_unused]] uint64_t idx, uint64_t cnt) noexcept
     {
         return (NDomainLength * static_cast<int64_t>((1 << NCellRank) * cnt));
     }
 
     template<size_t NCellRank> [[nodiscard]] static constexpr 
-    int64_t off_left(uint64_t idx, uint64_t cnt) noexcept
+    int64_t off_left([[maybe_unused]] uint64_t idx, uint64_t cnt) noexcept
     {
         return -off_right<NCellRank>(idx, cnt);
     }
 
     template<size_t NCellRank> [[nodiscard]] static constexpr 
-    int64_t off_right(uint64_t idx, uint64_t cnt) noexcept
+    int64_t off_right([[maybe_unused]] uint64_t idx, uint64_t cnt) noexcept
     {
         return static_cast<int64_t>((1 << NCellRank) * cnt);
     }
@@ -56,7 +56,7 @@ public:
         data_vec_(NDomainLength * NDomainLength)
     {}
 
-    template<class FInitFunc>
+    template<typename FInitFunc>
     void init(double length, FInitFunc func)
     {
         double scale_factor = length / NDomainLength;
@@ -70,6 +70,20 @@ public:
             int64_t idx = y_idx * NDomainLength + x_idx;
             data_vec_[idx] = func(x, y);
         }
+    }
+
+    template<typename TStream>
+    TStream& dump(TStream& stream) const noexcept
+    {
+        for (int64_t y_idx = 0; y_idx < NDomainLength; ++y_idx)
+        {
+            for (int64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
+                stream << data_vec_[y_idx * NDomainLength + x_idx] << ' ';
+
+            stream << '\n';
+        }
+
+        return stream;
     }
 
     WmLinearLayer2D(const WmLinearLayer2D&) = delete;

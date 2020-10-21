@@ -40,11 +40,11 @@ struct WmConeFoldTiling2D
     // [01 ]
 
     static constexpr EType TypeMtx[5][4] = {
-        [TYPE_A] = { TYPE_N, TYPE_A, TYPE_A, TYPE_B },
-        [TYPE_B] = { TYPE_B, TYPE_C, TYPE_C, TYPE_C },
-        [TYPE_C] = { TYPE_C, TYPE_C, TYPE_C, TYPE_C },
-        [TYPE_D] = { TYPE_C, TYPE_D, TYPE_D, TYPE_N },
-        [TYPE_N] = { TYPE_N, TYPE_N, TYPE_N, TYPE_N }
+        /* [TYPE_A] = */ { TYPE_N, TYPE_A, TYPE_A, TYPE_B },
+        /* [TYPE_B] = */ { TYPE_B, TYPE_C, TYPE_C, TYPE_C },
+        /* [TYPE_C] = */ { TYPE_C, TYPE_C, TYPE_C, TYPE_C },
+        /* [TYPE_D] = */ { TYPE_C, TYPE_D, TYPE_D, TYPE_N },
+        /* [TYPE_N] = */ { TYPE_N, TYPE_N, TYPE_N, TYPE_N }
     };
 
     // TODO: to generate code for the each case
@@ -167,7 +167,7 @@ struct WmConeFoldTiling2D<NR>::Test
         {}
 
         template<int NXSide, int NYSide, typename TLayer>
-        void apply(size_t idx, TLayer* layer) const
+        void apply(size_t idx, [[maybe_unused]] TLayer* layer) const
         {
             stream << "TestStencil::apply<" << 
                 NXSide << ", " << NYSide << ", " << "$TLayer" << 

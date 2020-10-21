@@ -21,6 +21,13 @@ struct WmBasicWaveData2D
     double intencity;
 };
 
+template<typename TStream>
+TStream& operator << (TStream& stream, const WmBasicWaveData2D& wave_data)
+{
+    stream << wave_data.intencity;
+    return stream;
+}
+
 class WmBasicWaveStencil2D
 {
 public:
@@ -65,9 +72,9 @@ public:
 
         // TODO: to distinguish between x and y
         layers[0][idx] = {
-            .factor = 
+            /* .factor = */
                 layers[-1][idx].factor,
-            .intencity = 
+            /* .intencity = */
                 -layers[-2][idx].intencity + 
                 ((layers[-1][idx + add_y].intencity + 
                   layers[-1][idx + sub_y].intencity - 

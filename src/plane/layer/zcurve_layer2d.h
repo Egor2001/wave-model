@@ -86,7 +86,7 @@ public:
         data_vec_(NDomainLength * NDomainLength)
     {}
 
-    template<class FInitFunc>
+    template<typename FInitFunc>
     void init(double length, FInitFunc func)
     {
         double scale_factor = length / NDomainLength;
@@ -110,6 +110,26 @@ public:
 
             row_idx += off_bottom<0>(row_idx, 1);
         }
+    }
+
+    template<typename TStream>
+    TStream& dump(TStream& stream) const noexcept
+    {
+        int64_t row_idx = 0;
+        for (int64_t y_idx = 0; y_idx < NDomainLength; ++y_idx)
+        {
+            int64_t idx = row_idx;
+            for (int64_t x_idx = 0; x_idx < NDomainLength; ++x_idx)
+            {
+                stream << data_vec_[idx] << ' ';
+                idx += off_right<0>(idx, 1);
+            }
+
+            stream << '\n';
+            row_idx += off_bottom<0>(row_idx, 1);
+        }
+
+        return stream;
     }
 
     WmZCurveLayer2D(const WmZCurveLayer2D&) = delete;
