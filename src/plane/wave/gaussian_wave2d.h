@@ -12,7 +12,7 @@ struct WmGaussianWave2D
     double ampl = 1.0;
     double sweep2 = 1.0;
 
-    constexpr double operator () (double x, double y) const noexcept
+    double operator () (double x, double y) const noexcept
     {
         double r2 = x * x + y * y;
 

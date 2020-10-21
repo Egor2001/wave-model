@@ -236,7 +236,7 @@ struct WmZCurveLayer2D<TD, ND>::Test
         WmZCurveLayer2D layer;
 
         size_t call_cnt = 0;
-        TestInitFunc init_func(stream, &call_cnt);
+        TestInitFunc<TStream> init_func(stream, &call_cnt);
 
         layer.init(1.0, init_func);
 

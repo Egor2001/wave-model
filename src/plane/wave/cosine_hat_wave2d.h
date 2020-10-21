@@ -12,7 +12,7 @@ struct WmCosineHatWave2D
     double ampl = 1.0;
     double freq = 1.0;
 
-    constexpr double operator () (double x, double y) const noexcept
+    double operator () (double x, double y) const noexcept
     {
         double r = std::sqrt(x * x + y * y);
 

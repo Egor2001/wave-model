@@ -26,7 +26,7 @@ TStream& test(TStream& stream)
 }
 
 int main([[maybe_unused]] int argc, 
-         [[maybe_unused]] const char* argv[])
+         [[maybe_unused]] char* argv[])
 {
 #if defined(WM_BENCHMARK)
     static constexpr size_t NTileRank = 2;
