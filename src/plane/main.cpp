@@ -5,6 +5,7 @@
 #include "logging/macro.h"
 #include "logging/logger.h"
 
+#include "layer/avx_layer2d.h"
 #include "layer/general_linear_layer2d.h"
 #include "stencil/avx_basic_wave_stencil2d.h"
 #include "tiling/general_conefold_tiling2d.h"
@@ -75,23 +76,30 @@ void benchmark()
 
 void test_wave(int argc, char* argv[])
 {
-    static constexpr size_t NTileRank = 4;
-    static constexpr size_t NSideRank = 7;
+    static constexpr size_t NTileRank = 3;
+    static constexpr size_t NSideRank = 5;
     static constexpr size_t NRunCount = 100; 
 
+    static constexpr double length = 1e2;
+    static constexpr double delta = length / (1u << NSideRank);
     WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
-    auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
+    auto init_func = [&init_wave](double x, double y) -> WmAvxBasicWaveData2D
     { 
         return { 
-            /* .factor = */ 1.0,
-            /* .intencity = */ init_wave(x, y) 
+            // .factor = 
+                _mm256_set1_pd(1.0),
+            // .intencity = 
+                _mm256_setr_pd(init_wave(4.0 * x + 0.0, y), 
+                               init_wave(4.0 * x + 1.0, y), 
+                               init_wave(4.0 * x + 2.0, y), 
+                               init_wave(4.0 * x + 3.0, y)) 
         }; 
     };
 
-    WmGeneralSolver2D<WmBasicWaveStencil2D, 
-               WmConeFoldTiling2D<NTileRank>, 
-               WmGeneralLinearLayer2D, NSideRank> 
-        solver(1e2, 0.1, init_func);
+    WmGeneralSolver2D<WmAvxBasicWaveStencil2D, 
+               WmGeneralConeFoldTiling2D<NTileRank>, 
+               WmAvxLinearLayer2D, NSideRank> 
+        solver(length, 0.1, init_func);
 
     if (argc < 2)
         std::cerr << "USAGE: " << argv[0] << " OUTFILE [LOGFILE]\n";
@@ -103,6 +111,6 @@ void test_wave(int argc, char* argv[])
         test(WmLogger::stream());
     }
 
-    solver.advance(NRunCount);
+    // solver.advance(NRunCount);
     solver.layer().dump(out_stream);
 }

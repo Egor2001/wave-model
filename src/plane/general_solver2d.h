@@ -20,12 +20,15 @@ public:
 
     using TStencil = TS;
     using TTiling = TT;
-    using TLayer = TL<typename TStencil::TData, 1ull << NRank>;
+    using TLayer = TL<typename TStencil::TData, 1u << NRank>;
 
     static constexpr size_t NTileRank = TTiling::NTileRank;
     static constexpr size_t NSizeX = TLayer::NDomainLengthX;
     static constexpr size_t NSizeY = TLayer::NDomainLengthY;
     static constexpr size_t NDepth = TStencil::NDepth + TTiling::NDepth;
+
+    static_assert(NSizeX >= (1u << NRank), 
+                  "NSizeX must be equal to 1u << NRank");
 
     WmGeneralSolver2D(double length, double dtime):
         length_(length),

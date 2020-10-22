@@ -11,10 +11,12 @@
 #include <cstdint>
 #include <cstddef>
 
+#include <cstring>
+
 namespace wave_model {
 
 // TODO: border & PML
-template<class TD, size_t NDX, size_t NDY = NDX>
+template<class TD, size_t NDX, size_t NDY/* = NDX */>
 class WmGeneralLinearLayer2D
 {
 public:
@@ -66,7 +68,7 @@ public:
     template<typename FInitFunc>
     void init(double length, FInitFunc func)
     {
-        double scale_factor = length / NDomainLengthX;
+        double scale_factor = length / NDomainLengthY;
 
         for (int64_t y_idx = 0; y_idx < NDomainLengthY; ++y_idx)
         for (int64_t x_idx = 0; x_idx < NDomainLengthX; ++x_idx)
@@ -76,7 +78,7 @@ public:
             double y = scale_factor * 
                 static_cast<double>(y_idx - NDomainLengthY / 2);
 
-            int64_t idx = y_idx * NDomainLengthY + x_idx;
+            int64_t idx = y_idx * NDomainLengthX + x_idx;
             data_vec_[idx] = func(x, y);
         }
     }
@@ -87,7 +89,7 @@ public:
         for (int64_t y_idx = 0; y_idx < NDomainLengthY; ++y_idx)
         {
             for (int64_t x_idx = 0; x_idx < NDomainLengthX; ++x_idx)
-                stream << data_vec_[y_idx * NDomainLengthY + x_idx] << ' ';
+                stream << data_vec_[y_idx * NDomainLengthX + x_idx] << ' ';
 
             stream << '\n';
         }
