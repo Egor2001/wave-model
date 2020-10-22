@@ -2,6 +2,7 @@
 bin/
 build/
 out/
+benchmark/
 tags
 *.tags
 

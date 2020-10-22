@@ -1,3 +1,5 @@
+#!/bin/bash
+
 main=bin/plain
 draw=src/plane/script/visualize.py
 outdir=out/

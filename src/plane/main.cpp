@@ -1,4 +1,4 @@
-// #define WM_BENCHMARK
+#define WM_BENCHMARK
 
 #include "solver2d.h"
 #include "logging/macro.h"
@@ -14,6 +14,24 @@
 using namespace wave_model;
 
 template<typename TStream>
+TStream& test(TStream& stream);
+
+void benchmark();
+void test_wave(int argc, char* argv[]);
+
+int main([[maybe_unused]] int argc, 
+         [[maybe_unused]] char* argv[])
+{
+#if defined(WM_BENCHMARK)
+    benchmark();
+#else
+    test_wave(argc, argv);
+#endif
+
+    return 0;
+}
+
+template<typename TStream>
 TStream& test(TStream& stream)
 {
     wm_test_linear_layer2d(stream);
@@ -25,22 +43,36 @@ TStream& test(TStream& stream)
     return stream;
 }
 
-int main([[maybe_unused]] int argc, 
-         [[maybe_unused]] char* argv[])
+void benchmark()
 {
-#if defined(WM_BENCHMARK)
-    static constexpr size_t NTileRank = 2;
-    static constexpr size_t NSideRank = 10;
+    static constexpr size_t NTileRank = 3;
+    static constexpr size_t NSideRank = 12;
 
-    static constexpr size_t NRunCount = // 1; // for cachegrind benchmark
-        1ull << ((16 - NSideRank) * 2 - NTileRank);
+    static constexpr size_t NRunCount = 
+        1ull << ((15 - NSideRank) * 2);
 
-#else // if !defined(WM_BENCHMARK)
+    WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
+    { 
+        return { 
+            /* .factor = */ 1.0,
+            /* .intencity = */ init_wave(x, y) 
+        }; 
+    };
+
+    WmSolver2D<WmBasicWaveStencil2D, 
+               WmConeFoldTiling2D<NTileRank>, 
+               WmLinearLayer2D, NSideRank> 
+        solver(1e2, 0.1, init_func);
+
+    solver.advance(NRunCount);
+}
+
+void test_wave(int argc, char* argv[])
+{
     static constexpr size_t NTileRank = 4;
     static constexpr size_t NSideRank = 7;
     static constexpr size_t NRunCount = 100; 
-
-#endif // defined(WM_BENCHMARK)
 
     WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
     auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
@@ -56,15 +88,8 @@ int main([[maybe_unused]] int argc,
                WmZCurveLayer2D, NSideRank> 
         solver(1e2, 0.1, init_func);
 
-#if defined(WM_BENCHMARK)
-    solver.advance(NRunCount);
-
-#else // if !defined(WM_BENCHMARK)
     if (argc < 2)
-    {
         std::cerr << "USAGE: " << argv[0] << " OUTFILE [LOGFILE]\n";
-        return 1;
-    }
 
     std::ofstream out_stream(argv[1]);
     if (argc > 2)
@@ -75,8 +100,4 @@ int main([[maybe_unused]] int argc,
 
     solver.advance(NRunCount);
     solver.layer().dump(out_stream);
-
-#endif // defined(WM_BENCHMARK)
-
-    return 0;
 }

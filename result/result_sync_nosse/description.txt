@@ -1,0 +1,7 @@
+Used grid size with rank 6...12 with size 64K...256M respectively.
+On last grid less tile size was used due to limited memory.
+Graph shows time consumed to perform 2^30 (~1 billion) stencil calculations.
+Stencil calculation requires 12 double-precision floating-point operations.
+So, in total, 12 billion operations are performed.
+Single core of Intel Core i3-3110M  has 20 Gflops peak performance.
+So, efficiency per time T seconds equals 0.6/T.
