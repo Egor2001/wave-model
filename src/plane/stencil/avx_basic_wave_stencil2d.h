@@ -28,7 +28,7 @@ TStream& operator << (TStream& stream, const WmAvxBasicWaveData2D& wave_data)
 {
     thread_local double buf[4u] = {};
 
-    _mm256_store_pd(buffer, wave_data.intencity);
+    _mm256_store_pd(buf, wave_data.intencity);
     stream << buf[0] << ' ' << buf[1] << ' ' << buf[2] << ' ' << buf[3];
 
     return stream;

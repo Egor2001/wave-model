@@ -1,8 +1,13 @@
-#define WM_BENCHMARK
+// #define WM_BENCHMARK
 
 #include "solver2d.h"
+#include "general_solver2d.h"
 #include "logging/macro.h"
 #include "logging/logger.h"
+
+#include "layer/general_linear_layer2d.h"
+#include "stencil/avx_basic_wave_stencil2d.h"
+#include "tiling/general_conefold_tiling2d.h"
 
 #include "test/tiling/conefold_tiling2d_test.h"
 #include "test/layer/linear_layer2d_test.h"
@@ -83,9 +88,9 @@ void test_wave(int argc, char* argv[])
         }; 
     };
 
-    WmSolver2D<WmBasicWaveStencil2D, 
+    WmGeneralSolver2D<WmBasicWaveStencil2D, 
                WmConeFoldTiling2D<NTileRank>, 
-               WmZCurveLayer2D, NSideRank> 
+               WmGeneralLinearLayer2D, NSideRank> 
         solver(1e2, 0.1, init_func);
 
     if (argc < 2)
