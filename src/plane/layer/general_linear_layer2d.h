@@ -16,7 +16,7 @@
 namespace wave_model {
 
 // TODO: border & PML
-template<class TD, size_t NDX, size_t NDY/* = NDX */>
+template<class TD, size_t NDX, size_t NDY = NDX>
 class WmGeneralLinearLayer2D
 {
 public:

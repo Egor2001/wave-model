@@ -12,6 +12,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     add_compile_options(-mavx -Wall -Wextra -pedantic)
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    message(AUTHOR_WARNING
+            "Intel compiler is temporary generating invalid output 
+            which is different from GNU and Clang results."
+            "Intel compiler support work is in progress."
+            )
+
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -debug all")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 
@@ -28,7 +34,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 
-    add_compile_options(-Weverything -pedantic
+    add_compile_options(-mavx -Weverything -pedantic
                         -Wno-sign-conversion
                         -Wno-exit-time-destructors
                         -Wno-c++98-compat-pedantic
@@ -36,7 +42,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
 
 else()
     message(FATAL_ERROR 
-        "${CMAKE_CXX_COMPILER_ID} is not currently supported."
+            "${CMAKE_CXX_COMPILER_ID} is not currently supported."
             "Use on of these instead:"
             "GNU gcc"
             "Intel icc"

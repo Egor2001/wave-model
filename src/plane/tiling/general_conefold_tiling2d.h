@@ -56,7 +56,7 @@ struct WmGeneralConeFoldTiling2D
         static constexpr size_t NQuadCnt = 
             TGeneralLayer::NDomainLengthY / TGeneralLayer::NDomainLengthX;
 
-        traverse_quad<NRank, 0, NQuadCnt>(stencil, layers);
+        traverse_chunk<NQuadCnt, NRank, 0, NQuadCnt>(stencil, layers);
     }
 
     // TODO: to replace length with rank
@@ -66,7 +66,7 @@ struct WmGeneralConeFoldTiling2D
     static void traverse_chunk(const TStencil& stencil, 
                                TGeneralLayer* layers) noexcept
     {
-        if constexpr (NChunkLength == 0)
+        if constexpr (NChunkLength == 1)
         {
             traverse_quad<NRank, NQuadIdx, NQuadCnt>(stencil, layers);
         }
@@ -87,8 +87,11 @@ struct WmGeneralConeFoldTiling2D
     static void traverse_quad(const TStencil& stencil, 
                               TGeneralLayer* layers) noexcept
     {
+        static constexpr size_t NSquare = 
+            TGeneralLayer::NDomainLengthX * TGeneralLayer::NDomainLengthX;
+
         static constexpr size_t NLess = NRank - 1;
-        static constexpr int64_t NIdx = (1u << NRank) * NQuadIdx;
+        static constexpr int64_t NIdx = NSquare * NQuadIdx;
 
         // such lambda call is guarenteed to be constexpr but ?: is not
         static constexpr EType NYTypeA = []() {

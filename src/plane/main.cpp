@@ -89,10 +89,11 @@ void test_wave(int argc, char* argv[])
             // .factor = 
                 _mm256_set1_pd(1.0),
             // .intencity = 
-                _mm256_setr_pd(init_wave(4.0 * x + 0.0, y), 
-                               init_wave(4.0 * x + 1.0, y), 
-                               init_wave(4.0 * x + 2.0, y), 
-                               init_wave(4.0 * x + 3.0, y)) 
+            // TODO: to replace delta / 4 with more convenient interface
+                _mm256_setr_pd(init_wave(4.0 * x + 0.00 * delta, y), 
+                               init_wave(4.0 * x + 0.25 * delta, y), 
+                               init_wave(4.0 * x + 0.50 * delta, y), 
+                               init_wave(4.0 * x + 0.75 * delta, y)) 
         }; 
     };
 
@@ -111,6 +112,6 @@ void test_wave(int argc, char* argv[])
         test(WmLogger::stream());
     }
 
-    // solver.advance(NRunCount);
+    solver.advance(NRunCount);
     solver.layer().dump(out_stream);
 }
