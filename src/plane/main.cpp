@@ -1,4 +1,4 @@
-// #define WM_BENCHMARK
+#define WM_BENCHMARK
 
 #include "solver2d.h"
 #include "general_solver2d.h"
@@ -52,17 +52,20 @@ TStream& test(TStream& stream)
 void benchmark()
 {
     static constexpr size_t NTileRank = 3;
-    static constexpr size_t NSideRank = 12;
+    static constexpr size_t NSideRank = 7;
 
     static constexpr size_t NRunCount = 
         1ull << ((15 - NSideRank) * 2);
 
-    WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    //WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    /*
     auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
     { 
         return { 
-            /* .factor = */ 1.0,
-            /* .intencity = */ init_wave(x, y) 
+            // .factor =
+            1.0,
+            // .intencity =
+            init_wave(x, y) 
         }; 
     };
 
@@ -70,6 +73,29 @@ void benchmark()
                WmConeFoldTiling2D<NTileRank>, 
                WmLinearLayer2D, NSideRank> 
         solver(1e2, 0.1, init_func);
+    */
+
+    static constexpr double length = 1e2;
+    static constexpr double delta = length / (1u << (NSideRank - 2));
+    WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    auto init_func = [&init_wave](double x, double y) -> WmAvxBasicWaveData2D
+    { 
+        return { 
+            // .factor = 
+                _mm256_set1_pd(1.0),
+            // .intencity = 
+            // TODO: to replace delta / 4 with more convenient interface
+                _mm256_setr_pd(init_wave(4.0 * x + 0.00 * delta, y), 
+                               init_wave(4.0 * x + 0.25 * delta, y), 
+                               init_wave(4.0 * x + 0.50 * delta, y), 
+                               init_wave(4.0 * x + 0.75 * delta, y)) 
+        }; 
+    };
+
+    WmGeneralSolver2D<WmAvxBasicWaveStencil2D, 
+                      WmGeneralConeFoldTiling2D<NTileRank>, 
+                      WmAvxLinearLayer2D, NSideRank - 2> 
+        solver(length, 0.1, init_func);
 
     solver.advance(NRunCount);
 }
