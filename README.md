@@ -5,6 +5,14 @@ Iterative wave modelling
 CPU: Intel(R) Core(TM) i3-3110M 
 Single-Threaded program
 
+### Time (profiled with Intel VTune)
+
+#### Linear vs Z-order data layout
+![layout-bench](result/result_sync_noavx/time_bench.png?raw=true)
+
+#### No-AVX vs AVX computations for linear layout 
+![avx-bench](/result/result_sync_avx/time_bench.png?raw=true)
+
 ### FLOPS (estimated)
 peak = ~20 Gflops
 (DS - domain size)
