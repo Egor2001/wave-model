@@ -17,7 +17,7 @@ namespace wave_model {
 
 struct WmBasicWaveData2D
 {
-    double factor;
+    static constexpr double FFactor = 1.0;
     double intencity;
 };
 
@@ -67,13 +67,11 @@ public:
 
         // TODO: to dittinguish between x and y
         double inv_dspace = 1.0 / dspace_;
-        double courant = layers[-1][idx].factor * dtime_ * inv_dspace;
+        double courant = TData::FFactor * dtime_ * inv_dspace;
         double courant2 = courant * courant;
 
         // TODO: to distinguish between x and y
         layers[0][idx] = {
-            /* .factor = */
-                layers[-1][idx].factor,
             /* .intencity = */
                 -layers[-2][idx].intencity + 
                 ((layers[-1][idx + add_y].intencity + 

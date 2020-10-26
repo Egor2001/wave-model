@@ -1,5 +1,5 @@
-#ifndef WAVE_MODEL_GENERAL_LAYER_LINEAR_LAYER2D_H_
-#define WAVE_MODEL_GENERAL_LAYER_LINEAR_LAYER2D_H_
+#ifndef WAVE_MODEL_LAYER_GENERAL_LINEAR_LAYER2D_H_
+#define WAVE_MODEL_LAYER_GENERAL_LINEAR_LAYER2D_H_
 
 #include "logging/macro.h"
 
@@ -65,6 +65,16 @@ public:
         data_vec_(NDomainLengthY * NDomainLengthX)
     {}
 
+    WmGeneralLinearLayer2D
+        (const WmGeneralLinearLayer2D&) = delete;
+    WmGeneralLinearLayer2D& operator = 
+        (const WmGeneralLinearLayer2D&) = delete;
+
+    WmGeneralLinearLayer2D
+        (WmGeneralLinearLayer2D&&) noexcept = default;
+    WmGeneralLinearLayer2D& operator = 
+        (WmGeneralLinearLayer2D&&) noexcept = default;
+
     template<typename FInitFunc>
     void init(double length, FInitFunc func)
     {
@@ -96,16 +106,6 @@ public:
 
         return stream;
     }
-
-    WmGeneralLinearLayer2D
-        (const WmGeneralLinearLayer2D&) = delete;
-    WmGeneralLinearLayer2D& operator = 
-        (const WmGeneralLinearLayer2D&) = delete;
-
-    WmGeneralLinearLayer2D
-        (WmGeneralLinearLayer2D&&) noexcept = default;
-    WmGeneralLinearLayer2D& operator = 
-        (WmGeneralLinearLayer2D&&) noexcept = default;
 
     [[nodiscard]] inline TData& operator [] (int64_t idx) noexcept
     {
@@ -245,4 +245,4 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
 
 } // namespace wave_model
 
-#endif // WAVE_MODEL_GENERAL_LAYER_LINEAR_LAYER2D_H_
+#endif // WAVE_MODEL_LAYER_GENERAL_LINEAR_LAYER2D_H_

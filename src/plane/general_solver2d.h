@@ -12,24 +12,26 @@
 namespace wave_model {
 
 template<typename TS, typename TT, 
-         template<typename, size_t> typename TL, size_t NR>
+         template<typename, size_t, size_t> typename TL, 
+         size_t NRX, size_t NRY>
 class WmGeneralSolver2D
 {
 public:
-    static constexpr size_t NRank = NR;
+    static constexpr size_t NRankX = NRX;
+    static constexpr size_t NRankY = NRY;
 
     using TStencil = TS;
     using TTiling = TT;
-    using TLayer = TL<typename TStencil::TData, 1u << NRank>;
+    using TLayer = TL<typename TStencil::TData, 1u << NRankX, 1u << NRankY>;
 
     static constexpr size_t NTileRank = TTiling::NTileRank;
     static constexpr size_t NSizeX = TLayer::NDomainLengthX;
     static constexpr size_t NSizeY = TLayer::NDomainLengthY;
     static constexpr size_t NDepth = TStencil::NDepth + TTiling::NDepth;
-
+/*
     static_assert(NSizeX >= (1u << NRank), 
                   "NSizeX must be equal to 1u << NRank");
-
+*/
     WmGeneralSolver2D(double length, double dtime):
         length_(length),
         stencil_(length_ / NSizeY, dtime),
@@ -55,7 +57,7 @@ public:
         for (; proc_idx < proc_cnt; proc_idx += TTiling::NDepth)
         {
             // make computations for TTiling::NDepth layers
-            TTiling::template traverse<NRank>
+            TTiling::template traverse<NRankX>
                 (stencil_, layers_arr_ + TStencil::NDepth);
 
             // rotate right to emulate dynamic programming with limited memory
