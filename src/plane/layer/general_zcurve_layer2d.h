@@ -23,6 +23,11 @@ public:
     static constexpr int64_t NDomainLengthX = NDX;
     static constexpr int64_t NDomainLengthY = NDY;
 
+    // TODO: fix the problem with general indexation!
+    static_assert(NDomainLengthX == NDomainLengthY, 
+                  "Only square indexation is currently available.\n"
+                  "Use WmGeneralLinearLayer instead temporarily.");
+
     static_assert(NDomainLengthX && !(NDomainLengthX & (NDomainLengthX - 1)), 
                   "NDomainLengthX must be 2's power");
 
