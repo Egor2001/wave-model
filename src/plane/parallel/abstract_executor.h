@@ -10,8 +10,8 @@ class WmAbstractExecutor /* abstract */
 public:
     WmAbstractExecutor() = default;
 
-    virtual ~WmAbstractExecutor() = 0;
-    virtual void enqueue(std::function<void()>);
+    virtual ~WmAbstractExecutor() = default;
+    virtual void enqueue(std::function<void()>) = 0;
 
 protected:
     WmAbstractExecutor& operator = (const WmAbstractExecutor&) = delete;

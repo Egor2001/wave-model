@@ -8,7 +8,7 @@ class WmAbstractNode /* abstract */
 public:
     WmAbstractNode() = default;
 
-    virtual ~WmAbstractNode() = 0;
+    virtual ~WmAbstractNode() = default;
     virtual void execute() = 0;
     virtual WmAbstractNode* proceed() const = 0;
 

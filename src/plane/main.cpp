@@ -1,5 +1,7 @@
 #define WM_BENCHMARK
 
+#include "test/parallel/thread_pool_executor_test.h"
+
 #include "general_solver2d.h"
 #include "logging/macro.h"
 #include "logging/logger.h"
@@ -117,6 +119,7 @@ auto run_vector_quad(double length /* = 1e2 */,
 
     return solver;
 }
+
 /*
 template<typename TStream>
 TStream& test(TStream& stream)
@@ -147,13 +150,23 @@ void test_wave(int argc, char* argv[], size_t run_count)
     solver.layer().dump(out_stream);
 }
 
+template<typename TStream>
+TStream& test_parallel(TStream& stream)
+{
+    wm_test_thread_pool_executor(stream);
+
+    return stream;
+}
+
 int main(int argc, char* argv[])
 {
+    test_parallel(std::cerr);
+/*
 #if defined(WM_BENCHMARK)
     run_vector_quad<12, 3>(1e2, 0.1, 500);
 #else
     test_wave<7>(argc, argv, 100);
 #endif
-
+*/
     return 0;
 }

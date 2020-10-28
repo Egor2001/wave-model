@@ -39,7 +39,7 @@ public:
                                 return !tasks_.empty() || stopped_;
                             });
 
-                        if (stopped_) 
+                        if (tasks_.empty() && stopped_) 
                             break;
 
                         auto task = tasks_.front();
@@ -104,15 +104,22 @@ struct WmThreadPoolExecutor::Test
         static constexpr size_t NDefaultConcurrency = 
             WmThreadPoolExecutor::NDefaultConcurrency;
 
-        WmThreadPoolExecutor thread_pool(NDefaultConcurrency);
+        size_t counter = 0;
+        std::mutex mutex;
 
-        std::atomic<size_t> counter{0};
-        for (size_t idx = 0; idx < NDefaultConcurrency; ++idx)
         {
-            thread_pool.enqueue([&counter, inc = idx + 1]() { 
-                    stream << counter.fetch_add(inc); 
-                });
+            WmThreadPoolExecutor thread_pool(NDefaultConcurrency);
+
+            for (size_t idx = 0; idx < NDefaultConcurrency; ++idx)
+            {
+                thread_pool.enqueue([&mutex, &counter, inc = idx + 1]() { 
+                        std::unique_lock<std::mutex> lock(mutex);
+                        counter += inc; 
+                    });
+            }
         }
+
+        stream << counter;
 
         return stream;
     }

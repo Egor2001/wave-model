@@ -10,7 +10,7 @@ class WmAbstractGrid /* abstract */
 public:
     WmAbstractGrid() = default;
 
-    virtual ~WmAbstractExecutor() = 0;
+    virtual ~WmAbstractExecutor() = default;
     virtual void traverse(WmAbstractExecutor& executor) = 0;
 
 protected:

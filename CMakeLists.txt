@@ -36,8 +36,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
 
     add_compile_options(-mavx -Weverything -pedantic
                         -Wno-sign-conversion
+                        -Wno-global-constructors
                         -Wno-exit-time-destructors
                         -Wno-c++98-compat-pedantic
+                        -Wno-padded
                         )
 
 else()
@@ -45,7 +47,7 @@ else()
             "${CMAKE_CXX_COMPILER_ID} is not currently supported."
             "Use on of these instead:"
             "GNU gcc"
-            "Intel icc"
+            "[Intel icc] - CURRENTLY UNAVAILABLE TO USE, FIX IS IN PROCESS"
             "LLVM Clang"
             "Apple Clang"
             )
