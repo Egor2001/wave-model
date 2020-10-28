@@ -1,5 +1,7 @@
-#ifndef PARALLEL_THREAD_POOL_H_
-#define PARALLEL_THREAD_POOL_H_
+#ifndef PARALLEL_THREAD_POOL_EXECUTOR_H_
+#define PARALLEL_THREAD_POOL_EXECUTOR_H_
+
+#include "abstract_executor.h"
 
 #include <vector>
 #include <queue>
@@ -13,7 +15,7 @@
 
 namespace wave_model {
 
-class WmThreadPool
+class WmThreadPoolExecutor final : public WmAbstractExecutor
 {
 public:
     struct Test;
@@ -21,7 +23,7 @@ public:
     static constexpr size_t NDefaultConcurrency = 4;
 
     // TODO: to check how much threads to run
-    explicit WmThreadPool(size_t workers_cnt = 
+    explicit WmThreadPoolExecutor(size_t workers_cnt = 
             std::thread::hardware_concurrency())
     {
         if (workers_cnt == 0)
@@ -51,13 +53,7 @@ public:
         }
     }
 
-    WmThreadPool             (const WmThreadPool&) = delete;
-    WmThreadPool& operator = (const WmThreadPool&) = delete;
-
-    WmThreadPool             (WmThreadPool&&) noexcept = default;
-    WmThreadPool& operator = (WmThreadPool&&) noexcept = default;
-
-    ~WmThreadPool()
+    ~WmThreadPoolExecutor() override final
     {
         {
             std::unique_lock<std::mutex> lock(mutex_);
@@ -69,11 +65,10 @@ public:
             worker.join();
     }
 
-    template<typename TFunc>
-    void enqueue(TFunc&& func)
+    void enqueue(std::function<void()> func) override final
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        tasks_.emplace(std::forward<TFunc>(func));
+        tasks_.push(std::move(func));
 
         lock.unlock();
         cond_var_.notify_one();
@@ -90,23 +85,29 @@ private:
     std::queue<std::function<void()>> tasks_;
 };
 
-struct WmThreadPool::Test
+struct WmThreadPoolExecutor::Test
 {
     template<typename TStream>
     static TStream& test_init(TStream& stream)
     {
-        WmThreadPool thread_pool(WmThreadPool::NDefaultConcurrency);
+        static constexpr size_t NDefaultConcurrency = 
+            WmThreadPoolExecutor::NDefaultConcurrency;
 
-        return stream
+        WmThreadPoolExecutor thread_pool(NDefaultConcurrency);
+
+        return stream;
     }
 
     template<typename TStream>
     static TStream& test_run(TStream& stream)
     {
-        WmThreadPool thread_pool(WmThreadPool::NDefaultConcurrency);
+        static constexpr size_t NDefaultConcurrency = 
+            WmThreadPoolExecutor::NDefaultConcurrency;
+
+        WmThreadPoolExecutor thread_pool(NDefaultConcurrency);
 
         std::atomic<size_t> counter{0};
-        for (size_t idx = 0; idx < WmThreadPool::NDefaultConcurrency; ++idx)
+        for (size_t idx = 0; idx < NDefaultConcurrency; ++idx)
         {
             thread_pool.enqueue([&counter, inc = idx + 1]() { 
                     stream << counter.fetch_add(inc); 
@@ -119,4 +120,4 @@ struct WmThreadPool::Test
 
 } // namespace wave_model 
 
-#endif // PARALLEL_THREAD_POOL_H_
+#endif // PARALLEL_THREAD_POOL_EXECUTOR_H_
