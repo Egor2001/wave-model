@@ -34,12 +34,14 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 
+    # TODO: to fix all disabled warnings
     add_compile_options(-mavx -Weverything -pedantic
                         -Wno-sign-conversion
                         -Wno-global-constructors
                         -Wno-exit-time-destructors
                         -Wno-c++98-compat-pedantic
                         -Wno-padded
+                        -Wno-weak-vtables
                         )
 
 else()

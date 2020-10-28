@@ -1,6 +1,8 @@
 #define WM_BENCHMARK
 
 #include "test/parallel/thread_pool_executor_test.h"
+#include "parallel/conefold_node2d.h"
+#include "parallel/conefold_grid2d.h"
 
 #include "general_solver2d.h"
 #include "logging/macro.h"
@@ -158,7 +160,8 @@ TStream& test_parallel(TStream& stream)
     return stream;
 }
 
-int main(int argc, char* argv[])
+int main([[maybe_unused]] int argc, 
+         [[maybe_unused]] char* argv[])
 {
     test_parallel(std::cerr);
 /*
