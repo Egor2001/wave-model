@@ -19,16 +19,19 @@ public:
     using TTiling = WmGeneralConeFoldTiling2D<NRank>;
     using EType = typename TTiling::EType;
 
-    // TODO: check for layer correctness
-    WmConeFoldNode2D(size_t idx, EType type_x, EType type_y, 
-                     TStencil& stencil, TLayer* layers):
-        WmAbstractNode(),
-        idx_{ idx },
-        type_x_{ type_x }, 
-        type_y_{ type_y },
-        stencil_{ stencil },
-        layers_{ layers }
-    {}
+    WmConeFoldNode2D() = default;
+
+    // TODO: check for correctness
+    // because of lack of copy/move - construction/assignment
+    void init(size_t idx, EType type_x, EType type_y, 
+              TStencil* stencil, TLayer* layers)
+    {
+        idx_ = idx;
+        type_x_ = type_x;
+        type_y_ = type_y;
+        stencil_ = stencil;
+        layers_ = layers;
+    }
 
     void execute() override final
     {
@@ -59,7 +62,7 @@ public:
                 case EType::TYPE_C: proc_fold<EType::TYPE_C, NTypeN>(); break;
                 case EType::TYPE_D: proc_fold<EType::TYPE_D, NTypeN>(); break;
                 case EType::TYPE_N: /* TODO: ERROR! */ break;
-                default: /* TODO: ERROR! */ break;
+                // default: /* TODO: ERROR! */ break;
             }
         }
         else if constexpr (NTypeY == NTypeN)
@@ -71,12 +74,13 @@ public:
                 case EType::TYPE_C: proc_fold<NTypeX, EType::TYPE_C>(); break;
                 case EType::TYPE_D: proc_fold<NTypeX, EType::TYPE_D>(); break;
                 case EType::TYPE_N: /* TODO: ERROR! */ break;
-                default: /* TODO: ERROR! */ break;
+                // default: /* TODO: ERROR! */ break;
             }
         }
         else
         {
-            proc_fold<NTypeX, NTypeY>(idx_, stencil_, layers_);
+            TTiling::template 
+                proc_fold<NRank, NTypeX, NTypeY>(idx_, *stencil_, layers_);
         }
     }
 
@@ -98,7 +102,7 @@ private:
     EType type_x_ = EType::TYPE_N; 
     EType type_y_ = EType::TYPE_N;
 
-    TStencil& stencil_;
+    TStencil* stencil_ = nullptr;
     TLayer* layers_ = nullptr;
 
     size_t affect_cnt_ = 0;

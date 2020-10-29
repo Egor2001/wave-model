@@ -5,6 +5,7 @@
 #include "parallel/conefold_grid2d.h"
 
 #include "general_solver2d.h"
+#include "parallel_solver2d.h"
 #include "logging/macro.h"
 #include "logging/logger.h"
 
@@ -122,6 +123,35 @@ auto run_vector_quad(double length /* = 1e2 */,
     return solver;
 }
 
+template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
+auto&& run_parallel(double length /* = 1e2 */, 
+                    double delta_time /* = 0.1 */, 
+                    size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
+{
+    static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
+
+    WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
+    { 
+        return { 
+            /* .intencity = */ init_wave(x, y) 
+        }; 
+    };
+
+    WmParallelSolver2D<
+        WmConeFoldGrid2D<
+            WmGeneralZCurveLayer2D<WmBasicWaveData2D, 1u << NSideRank>, 
+            WmBasicWaveStencil2D, 
+            WmGeneralConeFoldTiling2D<NTileRank>, NTileRank>>
+        solver(length, delta_time, init_func);
+
+    WmThreadPoolExecutor executor(4);
+
+    solver.advance(executor, run_count);
+
+    return std::move(solver);
+}
+
 /*
 template<typename TStream>
 TStream& test(TStream& stream)
@@ -163,13 +193,14 @@ TStream& test_parallel(TStream& stream)
 int main([[maybe_unused]] int argc, 
          [[maybe_unused]] char* argv[])
 {
-    test_parallel(std::cerr);
-/*
+    // test_parallel(std::cerr);
+
 #if defined(WM_BENCHMARK)
-    run_vector_quad<12, 3>(1e2, 0.1, 500);
+    run_parallel<7, 5>(1e2, 0.1, 500);
+    // run_vector_quad<12, 3>(1e2, 0.1, 500);
 #else
     test_wave<7>(argc, argv, 100);
 #endif
-*/
+
     return 0;
 }
