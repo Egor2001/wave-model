@@ -8,6 +8,15 @@
 #include <algorithm>
 #include <cstdint>
 
+// TODO: to move to separate header
+#if __has_cpp_attribute(likely) && __has_cpp_attribute(unlikely)
+    #define WM_LIKELY [[likely]]
+    #define WM_UNLIKELY [[unlikely]]
+#else
+    #define WM_LIKELY
+    #define WM_UNLIKELY
+#endif
+
 namespace wave_model {
 
 // TODO: error-checking and tests
@@ -22,9 +31,11 @@ public:
 
     static constexpr size_t NCellRank = NR;
     static constexpr size_t NCellSide = (1u << NCellRank);
-    static constexpr size_t NCellCount = 
-        ((TLayer::NDomainLengthX + NCellSide) * 
-         (TLayer::NDomainLengthY + NCellSide)) / (NCellSide * NCellSide);
+
+    static constexpr int64_t NCellCountX = 
+        (TLayer::NDomainLengthX / NCellSide) + 1;
+    static constexpr int64_t NCellCountY = 
+        (TLayer::NDomainLengthY / NCellSide) + 1;
 
     using TNode = WmConeFoldNode2D<TLayer, TStencil, NCellRank>;
     using TTiling = typename TNode::TTiling;
@@ -39,25 +50,20 @@ public:
         layers_{ layers },
         stencil_{ stencil }
     {
-        for (size_t time = 0; time < NTime; ++time)
+        for (size_t cur_time = 0; cur_time < NTime; ++cur_time)
         {
             int64_t row_idx = 0;
-            for (int64_t y_idx = 0; y_idx <= TLayer::NDomainLengthY; 
-                 y_idx += NCellSide)
+            for (int64_t y_idx = 0; y_idx < NCellCountY; ++y_idx)
             {
                 int64_t idx = row_idx;
-                for (int64_t x_idx = 0; x_idx <= TLayer::NDomainLengthX; 
-                     x_idx += NCellSide)
+                for (int64_t x_idx = 0; x_idx < NCellCountX; ++x_idx)
                 {
-                    int64_t node_idx = 
-                        (TLayer::NDomainLengthX / NCellSide) * y_idx + x_idx;
-
                     EType type_x = EType::TYPE_N;
                     switch (x_idx)
                     {
                         case 0: type_x = EType::TYPE_A; break;
                         case 1: type_x = EType::TYPE_B; break;
-                        case TLayer::NDomainLengthX: 
+                        case NCellCountX - 1: 
                                 type_x = EType::TYPE_D; break;
                         default: 
                                 type_x = EType::TYPE_C; break;
@@ -68,84 +74,82 @@ public:
                     {
                         case 0: type_y = EType::TYPE_A; break;
                         case 1: type_y = EType::TYPE_B; break;
-                        case TLayer::NDomainLengthY: 
+                        case NCellCountY - 1: 
                                 type_y = EType::TYPE_D; break;
                         default: 
                                 type_y = EType::TYPE_C; break;
                     }
 
+                    int64_t node_idx = NCellCountX * NCellCountY * cur_time + 
+                                       y_idx * NCellCountX + x_idx;
+
                     nodes_[node_idx].init(idx, type_x, type_y, 
                                           &stencil_, layers_);
 
-                    int64_t add_x = TLayer::template 
-                        off_right<NCellRank>(node_idx, 1u);
-                    int64_t add_y = TLayer::template 
-                        off_bottom<NCellRank>(node_idx, 1u);
+                    int64_t add_x = 1;
+                    int64_t add_y = NCellCountX;
 
-                    if (x_idx < TLayer::NDomainLengthX)
-                    {
-                        nodes_[node_idx].depends(nodes_ + 
-                                                 (node_idx + add_x));
-                    }
+                    if (x_idx < NCellCountX - 1)
+                        nodes_[node_idx].depends(nodes_ + (node_idx + add_x));
 
-                    if (y_idx < TLayer::NDomainLengthY)
-                    {
-                        nodes_[node_idx].depends(nodes_ + 
-                                                 (node_idx + add_y));
-                    }
+                    if (y_idx < NCellCountY - 1)
+                        nodes_[node_idx].depends(nodes_ + (node_idx + add_y));
 
-                    if (x_idx < TLayer::NDomainLengthX && 
-                        y_idx < TLayer::NDomainLengthY)
+                    if (x_idx < NCellCountX - 1 && y_idx < NCellCountY - 1)
                     {
                         nodes_[node_idx].next(nodes_ + 
-                                              (node_idx + add_x + add_y));
+                                (node_idx + add_x + add_y));
                     }
 
-                    idx += TLayer::template 
-                        off_right<NCellRank>(idx, 1u);
+                    idx += TLayer::template off_right<NCellRank>(idx, 1u);
                 }
 
-                row_idx += TLayer::template 
-                    off_bottom<NCellRank>(row_idx, 1u);
+                row_idx += TLayer::template off_bottom<NCellRank>(row_idx, 1u);
             }
         }
     }
 
     void traverse(WmAbstractExecutor& executor)
     {
-        int64_t idx = 0;
-        for (idx = TLayer::NDomainLengthX * TLayer::NDomainLengthY - 
-             NCellSide * NCellSide; idx >= 0; idx -= NCellSide * NCellSide)
+        static constexpr int64_t NDiagCnt = NCellCountX + NCellCountY - 1;
+        for (int64_t diag = NDiagCnt - 1; diag >= 0; --diag)
         {
-            idx += (TLayer::template off_right<NCellRank>(idx, 1u) + 
-                    TLayer::template off_bottom<NCellRank>(idx, 1u));
-            launch(executor, nodes_ + idx);
+            int64_t max_x_idx = std::min(diag, NCellCountX - 1);
+            int64_t max_y_idx = std::min(diag, NCellCountY - 1);
+
+            for (int64_t y_idx = max_y_idx, x_idx = diag - y_idx; 
+                 x_idx <= max_x_idx; --y_idx, ++x_idx)
+            {
+                int64_t idx = y_idx * NCellCountY + x_idx;
+                launch(executor, nodes_ + idx);
+            }
         }
-
-        std::vector<int64_t> border_vec;
-        border_vec.push_back(0);
-
-        idx = 0;
-        for (int64_t col = 1; col <= TLayer::NDomainLengthX; col += NCellSide)
-        {
-            idx += TLayer::template off_right<NCellRank>(idx, 1);
-            border_vec.push_back(idx);
-        }
-
-        idx = 0;
-        for (int64_t row = 1; row <= TLayer::NDomainLengthY; row += NCellSide)
-        {
-            idx += TLayer::template off_bottom<NCellRank>(idx, 1);
-            border_vec.push_back(idx);
-        }
-
-        std::sort(std::begin(border_vec), std::end(border_vec), 
-                  std::greater<int64_t>{});
 
         for (size_t cur_time = 1; cur_time < NTime; ++cur_time)
         {
-            for (int64_t border_idx : border_vec)
-                launch(executor, nodes_ + (NCellCount * cur_time + border_idx));
+            for (int64_t diag = std::max(NCellCountX, NCellCountY) - 1; 
+                 diag >= 0; --diag)
+            {
+                WM_UNLIKELY if (diag == 0)
+                {
+                    launch(executor, nodes_ + (NCellCountX * NCellCountY * 
+                                               cur_time));
+
+                    continue;
+                }
+
+                WM_LIKELY if (diag < NCellCountX)
+                {
+                    launch(executor, nodes_ + (NCellCountX * NCellCountY * 
+                                               cur_time + diag));
+                }
+
+                WM_LIKELY if (diag < NCellCountY)
+                {
+                    launch(executor, nodes_ + (NCellCountX * NCellCountY * 
+                                               cur_time + NCellCountX * diag));
+                }
+            }
         }
     }
 
@@ -166,7 +170,7 @@ public:
 private:
     TLayer* layers_;
     TStencil& stencil_;
-    TNode nodes_[NCellCount * NTime];
+    TNode nodes_[NCellCountX * NCellCountY * NTime];
 };
 
 } // namespace wave_model

@@ -196,7 +196,7 @@ int main([[maybe_unused]] int argc,
     // test_parallel(std::cerr);
 
 #if defined(WM_BENCHMARK)
-    run_parallel<7, 5>(1e2, 0.1, 500);
+    run_parallel<7, 5>(1e2, 0.1, 1/* 500 */);
     // run_vector_quad<12, 3>(1e2, 0.1, 500);
 #else
     test_wave<7>(argc, argv, 100);
