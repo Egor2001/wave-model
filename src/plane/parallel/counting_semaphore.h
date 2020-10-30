@@ -54,13 +54,12 @@ public:
 
     void release(ptrdiff_t update = 1)
     {
+        std::unique_lock<std::mutex> lock(mutex_);
+        value_ += update;
+        lock.unlock();
+
         while (update-- > 0)
-        {
-            std::unique_lock<std::mutex> lock(mutex_);
-            ++value_;
-            lock.unlock();
             cond_var_.notify_one();
-        }
     }
 
 private:

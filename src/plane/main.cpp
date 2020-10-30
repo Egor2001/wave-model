@@ -1,6 +1,8 @@
 #define WM_BENCHMARK
 
 #include "test/parallel/thread_pool_executor_test.h"
+#include "parallel/thread_pool_executor.h"
+#include "parallel/sequential_executor.h"
 #include "parallel/conefold_node2d.h"
 #include "parallel/conefold_grid2d.h"
 
@@ -124,9 +126,9 @@ auto run_vector_quad(double length /* = 1e2 */,
 }
 
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-auto&& run_parallel(double length /* = 1e2 */, 
-                    double delta_time /* = 0.1 */, 
-                    size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
+void run_parallel(double length /* = 1e2 */, 
+                  double delta_time /* = 0.1 */, 
+                  size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
 {
     static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
 
@@ -146,10 +148,10 @@ auto&& run_parallel(double length /* = 1e2 */,
         solver(length, delta_time, init_func);
 
     WmThreadPoolExecutor executor(4);
+    // WmSequentialExecutor executor;
 
+    // TODO: to fix node class before switching to sequential execution
     solver.advance(executor, run_count);
-
-    return std::move(solver);
 }
 
 /*
@@ -165,6 +167,8 @@ TStream& test(TStream& stream)
     return stream;
 }
 */
+
+// TODO: return unique_ptr
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
 void test_wave(int argc, char* argv[], size_t run_count)
 {
@@ -196,7 +200,7 @@ int main([[maybe_unused]] int argc,
     // test_parallel(std::cerr);
 
 #if defined(WM_BENCHMARK)
-    run_parallel<7, 5>(1e2, 0.1, 1/* 500 */);
+    run_parallel<5, 3>(1e2, 0.1, 1/* 500 */);
     // run_vector_quad<12, 3>(1e2, 0.1, 500);
 #else
     test_wave<7>(argc, argv, 100);

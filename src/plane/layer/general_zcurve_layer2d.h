@@ -47,8 +47,12 @@ public:
 
     // Z-order decode LUT
     static constexpr uint64_t ZDecodeArr[64] = { 
-        [0] = 0, [1] = 1, [4] = 2, [5] = 3, 
-        [16] = 4, [17] = 5, [20] = 6, [21] = 7 
+        /* [0] = */ 0, /* [1] = */ 1, 0xff, 0xff, 
+        /* [4] = */ 2, /* [5] = */ 3, 0xff, 0xff, 
+        0xff, 0xff, 0xff, 0xff, 
+        0xff, 0xff, 0xff, 0xff, 
+        /* [16] = */ 4, /* [17] = */ 5, 0xff, 0xff, 
+        /* [20] = */ 6, /* [21] = */ 7, 0xff, 0xff, 
     };
     static constexpr uint64_t ZDecodeArrSize = 
         sizeof(ZDecodeArr) / sizeof(ZDecodeArr[0]);

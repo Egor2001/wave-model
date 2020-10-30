@@ -33,6 +33,7 @@ public:
         layers_ = layers;
     }
 
+    // TODO: to override for sequential case
     void execute() override final
     {
         for (auto node : depend_vec_)
@@ -48,7 +49,7 @@ public:
     }
 
     // pass EType::TYPE_N to determine type
-    template<EType NTypeX, EType NTypeY>
+    template<EType NTypeX = EType::TYPE_N, EType NTypeY = EType::TYPE_N>
     void proc_fold()
     {
         static constexpr EType NTypeN = EType::TYPE_N;
@@ -80,7 +81,8 @@ public:
         else
         {
             TTiling::template 
-                proc_fold<NRank, NTypeX, NTypeY>(idx_, *stencil_, layers_);
+                proc_fold<NRank, NTypeX, NTypeY>(idx_, *stencil_, 
+                                                 layers_ + TStencil::NDepth);
         }
     }
 
