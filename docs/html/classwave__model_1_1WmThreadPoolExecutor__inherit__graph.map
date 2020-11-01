@@ -1,0 +1,4 @@
+<map id="wave_model::WmThreadPoolExecutor" name="wave_model::WmThreadPoolExecutor">
+<area shape="rect" id="node1" title="Simple parallel executor implementation Implements thread pool pattern &#45; multiple threads executing t..." alt="" coords="21,80,212,121"/>
+<area shape="rect" id="node2" href="$classwave__model_1_1WmAbstractExecutor.html" title="Abstract class describing task executor." alt="" coords="5,5,228,32"/>
+</map>

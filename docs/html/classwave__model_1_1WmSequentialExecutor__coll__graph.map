@@ -1,0 +1,4 @@
+<map id="wave_model::WmSequentialExecutor" name="wave_model::WmSequentialExecutor">
+<area shape="rect" id="node1" title="Executor implementing sequential strategy Is implemented for testing algorithms executed as the simpl..." alt="" coords="24,80,209,121"/>
+<area shape="rect" id="node2" href="$classwave__model_1_1WmAbstractExecutor.html" title="Abstract class describing task executor." alt="" coords="5,5,228,32"/>
+</map>

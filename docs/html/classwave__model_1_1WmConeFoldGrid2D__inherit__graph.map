@@ -1,0 +1,4 @@
+<map id="wave_model::WmConeFoldGrid2D&lt; TL, TS, TT, NR &gt;" name="wave_model::WmConeFoldGrid2D&lt; TL, TS, TT, NR &gt;">
+<area shape="rect" id="node1" title="Describes Grid for ConeFold tiling family." alt="" coords="5,80,216,121"/>
+<area shape="rect" id="node2" href="$classwave__model_1_1WmAbstractGrid.html" title="Abstact class describing grid The grid consists of the nodes each executing on single thread/core/uni..." alt="" coords="12,5,209,32"/>
+</map>

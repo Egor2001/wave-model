@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classwave__model_1_1WmAbstractExecutor.html" title="Abstract class describing task executor." alt="" coords="5,46,228,73"/>
+<area shape="rect" id="node2" href="$classwave__model_1_1WmSequentialExecutor.html" title="Executor implementing sequential strategy Is implemented for testing algorithms executed as the simpl..." alt="" coords="279,5,464,47"/>
+<area shape="rect" id="node3" href="$classwave__model_1_1WmThreadPoolExecutor.html" title="Simple parallel executor implementation Implements thread pool pattern &#45; multiple threads executing t..." alt="" coords="276,71,467,112"/>
+</map>
