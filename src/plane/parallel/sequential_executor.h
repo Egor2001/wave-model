@@ -1,27 +1,48 @@
 #ifndef PARALLEL_SEQUENTIAL_EXECUTOR_H_
 #define PARALLEL_SEQUENTIAL_EXECUTOR_H_
 
+/**
+ * @file
+ * @author Egor Elchinov <elchinov.es@gmail.com>
+ * @version 2.0
+ */
+
 #include "abstract_executor.h"
 
 #include <functional>
 
+/// @brief
 namespace wave_model {
 
+/**
+ * @brief Executor implementing sequential strategy
+ * Is implemented for testing algorithms executed as the simplest one.
+ */
 class WmSequentialExecutor final : public WmAbstractExecutor
 {
 public:
     struct Test;
 
-    // TODO: to check how much threads to run
+    /**
+     * @brief Default Ctor
+     */
     WmSequentialExecutor() = default;
     ~WmSequentialExecutor() override final = default;
 
+    /**
+     * @brief Immediately executes the task and bloks until executed
+     * @param func Task to be executed
+     * @see WmAbstractExecutor::enqueue()
+     */
     void enqueue(std::function<void()> func) override final
     {
         std::move(func)();
     }
 };
 
+/**
+ * @brief Test structure for WmSequentialExecutor
+ */
 struct WmSequentialExecutor::Test
 {
     template<typename TStream>

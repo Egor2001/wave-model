@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
-project(WaveModel VERSION 0.1.0 LANGUAGES C CXX)
+project(WaveModel VERSION 2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -62,4 +62,5 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 include_directories(PUBLIC src/)
 
+add_subdirectory(docs)
 add_subdirectory(src/plane)

@@ -1,6 +1,12 @@
 #ifndef WAVE_MODEL_PARALLEL_SOLVER2D_H_
 #define WAVE_MODEL_PARALLEL_SOLVER2D_H_
 
+/** 
+ * @file
+ * @author Egor Elchinov <elchinov.es@gmail.com>
+ * @version 2.0
+ */
+
 #include "logging/macro.h"
 
 #include "parallel/abstract_executor.h"
@@ -12,8 +18,16 @@
 
 #include <cstdint>
 
+/// @brief
 namespace wave_model {
 
+/**
+ * @brief Solver with parallel execution strategy support
+ * @tparam TG Grid type
+ *
+ * Provides interface over grid, allowing to simply process it.
+ * Types and constants are inherited from grid.
+ */
 template<typename TG>
 class WmParallelSolver2D
 {
@@ -35,6 +49,11 @@ public:
     static_assert(NSizeX >= (1u << NRank), 
                   "NSizeX must be equal to 1u << NRank");
 */
+    /**
+     * @brief Ctor from domain length and time delta
+     * @param length Domain side length
+     * @param dtime Time discretization delta
+     */
     WmParallelSolver2D(double length, double dtime):
         length_(length),
         stencil_(length_ / NSizeY, dtime),
@@ -42,6 +61,13 @@ public:
         grid_graph_(grid_.build_graph())
     {}
 
+    /**
+     * @brief Ctor from domain length, time delta and initial state function
+     * @tparam TInitFunc Initial state function type
+     * @param length Domain length
+     * @param dtime Time delta
+     * @param init_func Initial state function
+     */
     template<typename TInitFunc>
     WmParallelSolver2D(double length, double dtime, TInitFunc&& init_func):
         WmParallelSolver2D(length, dtime)
@@ -50,11 +76,20 @@ public:
             .init(length_, std::forward<TInitFunc>(init_func));
     }
 
+    /**
+     * @brief Returns current top layer
+     * @return Current top layer
+     */
     const TLayer& layer() const noexcept
     {
         return layers_arr_[TStencil::NDepth - 1];
     }
 
+    /**
+     * @brief Executes proc_cnt calculation steps
+     * @param executor Object to execute grid nodes
+     * @para, proc_cnt Number of steps to do
+     */
     void advance(WmAbstractExecutor& executor, size_t proc_cnt)
     {
         size_t proc_idx = 0;

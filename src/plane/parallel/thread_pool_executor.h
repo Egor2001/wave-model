@@ -1,6 +1,12 @@
 #ifndef PARALLEL_THREAD_POOL_EXECUTOR_H_
 #define PARALLEL_THREAD_POOL_EXECUTOR_H_
 
+/**
+ * @file
+ * @author Egor Elchinov <elchinov.es@gmail.com>
+ * @version 2.0
+ */
+
 #include "abstract_executor.h"
 
 #include <vector>
@@ -13,16 +19,27 @@
 // for Test struct
 #include <atomic>
 
+/// @brief
 namespace wave_model {
 
+/**
+ * @brief Simple parallel executor implementation
+ * Implements thread pool pattern - multiple threads executing tasks 
+ * from a single task queue.
+ */
 class WmThreadPoolExecutor final : public WmAbstractExecutor
 {
 public:
     struct Test;
 
+    /// Default threads count
     static constexpr size_t NDefaultConcurrency = 4;
 
     // TODO: to check how much threads to run
+    /**
+     * @brief Ctor from threads count
+     * @param workers_cnt Count of threads to be created
+     */
     explicit WmThreadPoolExecutor(size_t workers_cnt = 
             std::thread::hardware_concurrency())
     {
@@ -53,6 +70,10 @@ public:
         }
     }
 
+    /**
+     * @brief Dtor
+     * Waits for the queue to be empty and joins all threads
+     */
     ~WmThreadPoolExecutor() override final
     {
         {
@@ -65,6 +86,12 @@ public:
             worker.join();
     }
 
+    /**
+     * @brief Adds task to the task queue
+     * @param func Task to be enqueued
+     * Task will be executed in parallel on one of worker threads.
+     * @see WmAbstractExecutor::enqueue()
+     */
     void enqueue(std::function<void()> func) override final
     {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -85,6 +112,9 @@ private:
     std::queue<std::function<void()>> tasks_;
 };
 
+/**
+ * @brief Test structure for WmThreadPoolExecutor
+ */
 struct WmThreadPoolExecutor::Test
 {
     template<typename TStream>

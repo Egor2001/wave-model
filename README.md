@@ -1,6 +1,29 @@
 # wave-model
 Iterative wave modelling
 
+## build
+```console
+$ mkdir -p build && cd build
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ make
+```
+Requires modern C++17 GNU/Clang compiler to be used
+
+## docs
+```console
+$ mkdir -p build && cd build
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ make docs
+```
+See docs in docs/html/index.html with your browser
+Requires Doxygen to be installed
+
+## run
+```console
+$ ./run.sh
+```
+See visualiation result in out/fig.png
+
 ## metrics
 CPU: Intel(R) Core(TM) i3-3110M 
 Single-Threaded program
@@ -29,23 +52,6 @@ data layout | rd rate | wr rate
 ------------|---------|--------
 linear | 7.5 % | 14.6 %
 Z-order | 0.8 % | 6.1 %
-
-One possible explanation of this incorrelation is 
-that vectorization is better for linear layout, 
-so that cache misses may be not crucial in this case.
-(this guess needs to be verified).
-
-## build
-```console
-$ mkdir build && cd build
-$ cmake -DCMAKE_BUILD_TYPE=Release ..
-$ make
-```
-
-## run
-```console
-$ ./run.sh
-```
 
 ## contacts
 - telegram: [@geome\_try](https://t.me/geome_try)

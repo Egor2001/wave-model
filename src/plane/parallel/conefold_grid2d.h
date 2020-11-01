@@ -1,6 +1,12 @@
 #ifndef WAVE_MODEL_PARALLEL_CONEFOLD_GRID_2D_H_
 #define WAVE_MODEL_PARALLEL_CONEFOLD_GRID_2D_H_
 
+/**
+ * @file
+ * @author Egor Elchinov <elchinov.es@gmail.com>
+ * @version 2.0
+ */
+
 #include "grid_graph.h"
 #include "conefold_node2d.h"
 #include "abstract_grid.h"
@@ -18,14 +24,22 @@
     #define WM_UNLIKELY
 #endif
 
+/// @brief
 namespace wave_model {
 
 // TODO: error-checking and tests
+/**
+ * @brief Describes Grid for ConeFold tiling family
+ * @tparam TL Layer type
+ * @tparam TS Stencil type
+ * @tparam TT Tiling type (must be one of conefold tilings to work correctly)
+ * @tparam NR Node rank
+ */
 template<typename TL, typename TS, typename TT, size_t NR>
 class WmConeFoldGrid2D : public WmAbstractGrid
 {
 public:
-    struct Test;
+    // TODO: struct Test;
 
     using TLayer = TL;
     using TStencil = TS;
@@ -48,6 +62,10 @@ public:
     static_assert(NCellSide < TLayer::NDomainLengthX, 
                   "cell must be less than domain");
 
+    /**
+     * @brief Ctor from layers array and stencil
+     * Initializes internal nodes and additional data
+     */
     WmConeFoldGrid2D(TLayer* layers, TStencil& stencil):
         layers_{ layers },
         stencil_{ stencil },
@@ -97,11 +115,19 @@ public:
         }
     }
 
+    /**
+     * @brief Returns pointer to idx'th node
+     * @see WmAbstractGrid::access_node()
+     */
     TNode* access_node(size_t idx) override final
     {
         return nodes_ + idx;
     }
 
+    /**
+     * @brief Builds and returns conefold structure graph
+     * @see WmAbstractGrid::build_graph()
+     */
     WmGridGraph build_graph() const override final
     {
         static constexpr int64_t NDiagCnt = NCellCountX + NCellCountY - 1;

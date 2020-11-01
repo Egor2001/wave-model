@@ -1,12 +1,25 @@
 #ifndef WAVE_MODEL_PARALLEL_CONEFOLD_NODE_2D_H_
 #define WAVE_MODEL_PARALLEL_CONEFOLD_NODE_2D_H_
 
+/**
+ * @file
+ * @author Egor Elchinov <elchinov.es@gmail.com>
+ * @version 2.0
+ */
+
 #include "abstract_node.h"
 #include "counting_semaphore.h"
 #include "tiling/general_conefold_tiling2d.h"
 
+/// @brief
 namespace wave_model {
 
+/**
+ * @brief Describes node class for conefold tiling family
+ * @tparam TL Layer type (needs to be one of the conefold family)
+ * @tparam TS Stencil type
+ * @tparam NR Node rank
+ */
 template<typename TL, typename TS, size_t NR>
 class WmConeFoldNode2D final : public WmAbstractNode
 {
@@ -19,8 +32,17 @@ public:
     using TTiling = WmGeneralConeFoldTiling2D<NRank>;
     using EType = typename TTiling::EType;
 
+    /**
+     * @brief Default ctor
+     * Produces invalid node.
+     * Only presents to store nodes in an array.
+     */
     WmConeFoldNode2D() = default;
 
+    /**
+     * @brief Ctor initializing all node fields
+     * Needs to be called on each node to make it valid.
+     */
     WmConeFoldNode2D(size_t idx, EType type_x, EType type_y, 
                      TStencil* stencil, TLayer* layers):
         idx_{ idx },
@@ -30,11 +52,16 @@ public:
         layers_{ layers }
     {}
 
+    /**
+     * @brief Executes node calculations
+     * @see WmAbstractNode::execute()
+     */
     void execute() override final
     {
         proc_fold();
     }
 
+protected:
     template<EType NTypeX = EType::TYPE_N, EType NTypeY = EType::TYPE_N>
     void proc_fold()
     {

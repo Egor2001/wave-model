@@ -1,5 +1,11 @@
 // #define WM_BENCHMARK
 
+/**
+ * @file
+ * @author Egor Elchinov <elchinov.es@gmail.com>
+ * @version 2.0
+ */
+
 #include "test/parallel/thread_pool_executor_test.h"
 #include "parallel/thread_pool_executor.h"
 #include "parallel/sequential_executor.h"
@@ -31,8 +37,25 @@
 #include <fstream>
 #include <memory>
 
+/// @brief
 using namespace wave_model;
 
+/**
+ * @brief Runs scalar computations
+ *
+ * Properties:
+ * - Solver: general
+ * - Stencil: Basic 2-order scalar
+ * - Data: Z-order
+ * - Tiling: ConeFold
+ * - Initial: Cosine hat
+ *
+ * @tparam NSideRank Rank of the domain side
+ * @tparam NTileRank Rank of the tiling depth
+ * @param length Domain length
+ * @param delta_time Time discretization delta
+ * @param run_count Number of layer calculation steps
+ */
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
 auto run_scalar(double length, double delta_time, size_t run_count)
 {
@@ -56,6 +79,22 @@ auto run_scalar(double length, double delta_time, size_t run_count)
     return solver;
 }
 
+/**
+ * @brief Runs vectorized-by-axis computations
+ *
+ * Properties:
+ * - Solver: general
+ * - Stencil: Basic 2-order vectorized-by-axis with AVX
+ * - Data: Linear
+ * - Tiling: ConeFold
+ * - Initial: Cosine hat
+ *
+ * @tparam NSideRank Rank of the domain side
+ * @tparam NTileRank Rank of the tiling depth
+ * @param length Domain length
+ * @param delta_time Time discretization delta
+ * @param run_count Number of layer calculation steps
+ */
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
 auto run_vector_axis(double length, double delta_time, size_t run_count)
 {
@@ -93,6 +132,22 @@ auto run_vector_axis(double length, double delta_time, size_t run_count)
     return solver;
 }
 
+/**
+ * @brief Runs vectorized-by-quad computations
+ *
+ * Properties:
+ * - Solver: general
+ * - Stencil: Basic 2-order vectorized-by-quad with AVX
+ * - Data: Linear
+ * - Tiling: ConeFold
+ * - Initial: Cosine hat
+ *
+ * @tparam NSideRank Rank of the domain side
+ * @tparam NTileRank Rank of the tiling depth
+ * @param length Domain length
+ * @param delta_time Time discretization delta
+ * @param run_count Number of layer calculation steps
+ */
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
 auto run_vector_quad(double length, double delta_time, size_t run_count)
 {
@@ -130,6 +185,22 @@ auto run_vector_quad(double length, double delta_time, size_t run_count)
     return solver;
 }
 
+/**
+ * @brief Runs distributed-grid computations
+ *
+ * Properties:
+ * - Solver: parallel
+ * - Stencil: Basic 2-order vectorized-by-quad with AVX
+ * - Data: Linear
+ * - Tiling: ConeFold
+ * - Initial: Cosine hat
+ *
+ * @tparam NSideRank Rank of the domain side
+ * @tparam NTileRank Rank of the tiling depth
+ * @param length Domain length
+ * @param delta_time Time discretization delta
+ * @param run_count Number of layer calculation steps
+ */
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
 auto run_parallel(double length, double delta_time, size_t run_count)
 {
