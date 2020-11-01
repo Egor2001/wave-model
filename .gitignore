@@ -1,8 +1,11 @@
 # wave-model
 bin/
-build/
+lib/
 out/
+build/
 benchmark/
+docs/*
+!docs/CMakeLists.txt
 tags
 *.tags
 
