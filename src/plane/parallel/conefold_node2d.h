@@ -106,10 +106,6 @@ private:
 
     TStencil* stencil_ = nullptr;
     TLayer* layers_ = nullptr;
-
-    size_t affect_cnt_ = 0;
-    WmConeFoldNode2D* next_ = nullptr;
-    std::vector<WmConeFoldNode2D*> depend_vec_;
 };
 
 } // namespace wave_model
