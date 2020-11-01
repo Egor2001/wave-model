@@ -34,9 +34,7 @@
 using namespace wave_model;
 
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-auto run_scalar(double length /* = 1e2 */, 
-                double delta_time /* = 0.1 */, 
-                size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
+auto run_scalar(double length, double delta_time, size_t run_count)
 {
     static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
 
@@ -161,10 +159,10 @@ auto run_parallel(double length, double delta_time, size_t run_count)
             >
         (length, delta_time, init_func);
 
+    // TODO: to fix parallel execution
     // WmThreadPoolExecutor executor(4);
     WmSequentialExecutor executor;
 
-    // TODO: to fix node class before switching to sequential execution
     solver->advance(executor, run_count);
 
     return solver;
@@ -184,9 +182,17 @@ TStream& test(TStream& stream)
 }
 */
 
-template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-auto test_wave(int argc, char* argv[], size_t run_count)
+template<typename TStream>
+TStream& test_parallel(TStream& stream)
 {
+    wm_test_thread_pool_executor(stream);
+
+    return stream;
+}
+
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
+{
+#if !defined(WM_BENCHMARK)
     if (argc < 2)
         std::cerr << "USAGE: " << argv[0] << " OUTFILE [LOGFILE]\n";
 
@@ -197,32 +203,25 @@ auto test_wave(int argc, char* argv[], size_t run_count)
         // test(WmLogger::stream());
     }
 
-    // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, run_count);
-    auto solver = run_parallel<NSideRank, NTileRank>(1e2, 0.1, run_count);
+    static constexpr size_t NSideRank = 7;
+    static constexpr size_t NTileRank = 5;
+    static constexpr size_t NRunCount = 100;
+
+#else // defined(WM_BENCHMARK)
+    static constexpr size_t NSideRank = 12;
+    static constexpr size_t NTileRank = 3;
+    static constexpr size_t NRunCount = 500;
+
+#endif // defined(WM_BENCHMARK)
+
+    auto solver = run_parallel<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    // auto solver = run_vector_axis<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+
+#if !defined(WM_BENCHMARK)
     solver->layer().dump(out_stream);
 
-    return solver;
-}
-
-template<typename TStream>
-TStream& test_parallel(TStream& stream)
-{
-    wm_test_thread_pool_executor(stream);
-
-    return stream;
-}
-
-int main([[maybe_unused]] int argc, 
-         [[maybe_unused]] char* argv[])
-{
-    // test_parallel(std::cerr);
-
-#if defined(WM_BENCHMARK)
-    run_parallel<5, 3>(1e2, 0.1, 1/* 500 */);
-    // run_vector_quad<12, 3>(1e2, 0.1, 500);
-#else
-    test_wave<7>(argc, argv, 100);
-#endif
+#endif // defined(WM_BENCHMARK)
 
     return 0;
 }
