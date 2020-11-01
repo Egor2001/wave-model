@@ -41,7 +41,7 @@ template<ptrdiff_t NLeastMaxValue>
 class WmCountingSemaphore
 {
 public:
-    explicit WmCountingSemaphore(ptrdiff_t value):
+    explicit WmCountingSemaphore(ptrdiff_t value = 0):
         value_{ value }
     {}
 

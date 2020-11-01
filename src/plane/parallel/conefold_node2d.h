@@ -21,34 +21,20 @@ public:
 
     WmConeFoldNode2D() = default;
 
-    // TODO: check for correctness
-    // because of lack of copy/move - construction/assignment
-    void init(size_t idx, EType type_x, EType type_y, 
-              TStencil* stencil, TLayer* layers)
-    {
-        idx_ = idx;
-        type_x_ = type_x;
-        type_y_ = type_y;
-        stencil_ = stencil;
-        layers_ = layers;
-    }
+    WmConeFoldNode2D(size_t idx, EType type_x, EType type_y, 
+                     TStencil* stencil, TLayer* layers):
+        idx_{ idx },
+        type_x_{ type_x },
+        type_y_{ type_y },
+        stencil_{ stencil },
+        layers_{ layers }
+    {}
 
-    // TODO: to override for sequential case
     void execute() override final
     {
-        for (auto node : depend_vec_)
-            node->semaphore_.acquire();
-
-        proc_fold<EType::TYPE_N, EType::TYPE_N>();
-        semaphore_.release(affect_cnt_);
+        proc_fold();
     }
 
-    WmConeFoldNode2D* proceed() const override final
-    {
-        return next_;
-    }
-
-    // pass EType::TYPE_N to determine type
     template<EType NTypeX = EType::TYPE_N, EType NTypeY = EType::TYPE_N>
     void proc_fold()
     {
@@ -86,20 +72,7 @@ public:
         }
     }
 
-    void next(WmConeFoldNode2D* node)
-    {
-        next_ = node;
-    }
-
-    void depends(WmConeFoldNode2D* node)
-    {
-        ++node->affect_cnt_;
-        depend_vec_.push_back(node);
-    }
-
 private:
-    WmCountingSemaphore<TStencil::NTargets> semaphore_{ 0 };
-
     size_t idx_ = 0;
     EType type_x_ = EType::TYPE_N; 
     EType type_y_ = EType::TYPE_N;

@@ -1,10 +1,11 @@
 #ifndef WAVE_MODEL_PARALLEL_SOLVER2D_H_
 #define WAVE_MODEL_PARALLEL_SOLVER2D_H_
 
-//TODO: to include in each place where is needed
 #include "logging/macro.h"
 
 #include "parallel/abstract_executor.h"
+#include "parallel/grid_graph.h"
+#include "parallel/counting_semaphore.h"
 
 #include <vector>
 #include <algorithm>
@@ -37,8 +38,8 @@ public:
     WmParallelSolver2D(double length, double dtime):
         length_(length),
         stencil_(length_ / NSizeY, dtime),
-        layers_arr_{},
-        grid_(layers_arr_, stencil_)
+        grid_(layers_arr_, stencil_),
+        grid_graph_(grid_.build_graph())
     {}
 
     template<typename TInitFunc>
@@ -59,8 +60,20 @@ public:
         size_t proc_idx = 0;
         for (; proc_idx < proc_cnt; proc_idx += TTiling::NDepth)
         {
-            // make computations for TTiling::NDepth layers
-            grid_.traverse(executor);
+            // make computations in grid order
+            for (size_t idx : grid_graph_.order)
+            {
+                executor.enqueue([this, idx]() {
+                        for (size_t affect : grid_graph_.graph[idx])
+                            semaphores_[affect].acquire();
+
+                        grid_.access_node(idx)->execute();
+                        semaphores_[idx].release();
+
+                        for (size_t affect : grid_graph_.graph[idx])
+                            semaphores_[affect].release();
+                    });
+            }
 
             // rotate right to emulate dynamic programming with limited memory
             std::rotate(std::rbegin(layers_arr_), 
@@ -78,8 +91,10 @@ public:
 private:
     double length_ = 0.0;
     TStencil stencil_;
-    TLayer layers_arr_[NDepth];
     TGrid grid_;
+    WmGridGraph grid_graph_;
+    WmCountingSemaphore<1> semaphores_[TGrid::NNodes];
+    TLayer layers_arr_[NDepth];
 };
 
 } // namespace wave_model

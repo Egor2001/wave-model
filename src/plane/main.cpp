@@ -1,4 +1,4 @@
-#define WM_BENCHMARK
+// #define WM_BENCHMARK
 
 #include "test/parallel/thread_pool_executor_test.h"
 #include "parallel/thread_pool_executor.h"
@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 using namespace wave_model;
 
@@ -58,9 +59,7 @@ auto run_scalar(double length /* = 1e2 */,
 }
 
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-auto run_vector_axis(double length /* = 1e2 */, 
-                     double delta_time /* =  0/1 */, 
-                     size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
+auto run_vector_axis(double length, double delta_time, size_t run_count)
 {
     static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
 
@@ -69,8 +68,6 @@ auto run_vector_axis(double length /* = 1e2 */,
     auto init_func = [&init_wave, delta](double x, double y) -> 
         WmAvxAxisBasicWaveData2D
     { 
-        // std::cerr << "FUNC (" << x << ", " << y << ")\n";
-
         return { 
             // .intencity = 
             // TODO: to replace delta / 4 with more convenient interface
@@ -81,20 +78,25 @@ auto run_vector_axis(double length /* = 1e2 */,
         }; 
     };
 
-    WmGeneralSolver2D<WmAvxAxisBasicWaveStencil2D, 
-                      WmGeneralConeFoldTiling2D<NTileRank>, 
-                      WmGeneralLinearLayer2D, NSideRank - 2, NSideRank> 
-        solver(length, delta_time, init_func);
+    auto solver = 
+        std::make_unique<
+            WmGeneralSolver2D<
+                WmAvxAxisBasicWaveStencil2D, 
+                WmGeneralConeFoldTiling2D<NTileRank>, 
+                WmGeneralLinearLayer2D, 
+                NSideRank - 2, 
+                NSideRank
+                >
+            >
+        (length, delta_time, init_func);
 
-    solver.advance(run_count);
+    solver->advance(run_count);
 
     return solver;
 }
 
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-auto run_vector_quad(double length /* = 1e2 */, 
-                     double delta_time /* =  0/1 */, 
-                     size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
+auto run_vector_quad(double length, double delta_time, size_t run_count)
 {
     static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
 
@@ -103,8 +105,6 @@ auto run_vector_quad(double length /* = 1e2 */,
     auto init_func = [&init_wave, delta](double x, double y) -> 
         WmAvxQuadBasicWaveData2D
     { 
-        // std::cerr << "FUNC (" << x << ", " << y << ")\n";
-
         return { 
             // .intencity = 
             // TODO: to replace delta / 4 with more convenient interface
@@ -115,20 +115,25 @@ auto run_vector_quad(double length /* = 1e2 */,
         }; 
     };
 
-    WmGeneralSolver2D<WmAvxQuadBasicWaveStencil2D, 
-                      WmGeneralConeFoldTiling2D<NTileRank>, 
-                      WmGeneralLinearLayer2D, NSideRank - 1, NSideRank - 1> 
-        solver(length, delta_time, init_func);
+    auto solver = 
+        std::make_unique<
+            WmGeneralSolver2D<
+                WmAvxQuadBasicWaveStencil2D, 
+                WmGeneralConeFoldTiling2D<NTileRank>, 
+                WmGeneralLinearLayer2D, 
+                NSideRank - 1, 
+                NSideRank - 1
+                > 
+            >
+        (length, delta_time, init_func);
 
-    solver.advance(run_count);
+    solver->advance(run_count);
 
     return solver;
 }
 
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-void run_parallel(double length /* = 1e2 */, 
-                  double delta_time /* = 0.1 */, 
-                  size_t run_count /* = 1 << ((15 - NSideRank) * 2) */)
+auto run_parallel(double length, double delta_time, size_t run_count)
 {
     static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
 
@@ -136,22 +141,33 @@ void run_parallel(double length /* = 1e2 */,
     auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
     { 
         return { 
-            /* .intencity = */ init_wave(x, y) 
+            // .intencity = 
+            init_wave(x, y) 
         }; 
     };
 
-    WmParallelSolver2D<
-        WmConeFoldGrid2D<
-            WmGeneralZCurveLayer2D<WmBasicWaveData2D, 1u << NSideRank>, 
-            WmBasicWaveStencil2D, 
-            WmGeneralConeFoldTiling2D<NTileRank>, NTileRank>>
-        solver(length, delta_time, init_func);
+    auto solver = 
+        std::make_unique<
+            WmParallelSolver2D<
+                WmConeFoldGrid2D<
+                WmGeneralZCurveLayer2D<
+                    WmBasicWaveData2D, 
+                    1u << NSideRank
+                    >, 
+                WmBasicWaveStencil2D, 
+                WmGeneralConeFoldTiling2D<NTileRank>, 
+                NTileRank>
+                >
+            >
+        (length, delta_time, init_func);
 
-    WmThreadPoolExecutor executor(4);
-    // WmSequentialExecutor executor;
+    // WmThreadPoolExecutor executor(4);
+    WmSequentialExecutor executor;
 
     // TODO: to fix node class before switching to sequential execution
-    solver.advance(executor, run_count);
+    solver->advance(executor, run_count);
+
+    return solver;
 }
 
 /*
@@ -168,9 +184,8 @@ TStream& test(TStream& stream)
 }
 */
 
-// TODO: return unique_ptr
 template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
-void test_wave(int argc, char* argv[], size_t run_count)
+auto test_wave(int argc, char* argv[], size_t run_count)
 {
     if (argc < 2)
         std::cerr << "USAGE: " << argv[0] << " OUTFILE [LOGFILE]\n";
@@ -182,8 +197,11 @@ void test_wave(int argc, char* argv[], size_t run_count)
         // test(WmLogger::stream());
     }
 
-    auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, run_count);
-    solver.layer().dump(out_stream);
+    // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, run_count);
+    auto solver = run_parallel<NSideRank, NTileRank>(1e2, 0.1, run_count);
+    solver->layer().dump(out_stream);
+
+    return solver;
 }
 
 template<typename TStream>

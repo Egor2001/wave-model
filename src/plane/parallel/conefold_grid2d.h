@@ -1,8 +1,9 @@
 #ifndef WAVE_MODEL_PARALLEL_CONEFOLD_GRID_2D_H_
 #define WAVE_MODEL_PARALLEL_CONEFOLD_GRID_2D_H_
 
+#include "grid_graph.h"
 #include "conefold_node2d.h"
-#include "abstract_executor.h"
+#include "abstract_grid.h"
 
 #include <vector>
 #include <algorithm>
@@ -21,7 +22,7 @@ namespace wave_model {
 
 // TODO: error-checking and tests
 template<typename TL, typename TS, typename TT, size_t NR>
-class WmConeFoldGrid2D
+class WmConeFoldGrid2D : public WmAbstractGrid
 {
 public:
     struct Test;
@@ -42,13 +43,15 @@ public:
     using EType = typename TTiling::EType;
 
     static constexpr size_t NTime = TLayer::NDomainLengthX / NCellSide;
+    static constexpr size_t NNodes = NCellCountX * NCellCountY * NTime;
 
     static_assert(NCellSide < TLayer::NDomainLengthX, 
                   "cell must be less than domain");
 
     WmConeFoldGrid2D(TLayer* layers, TStencil& stencil):
         layers_{ layers },
-        stencil_{ stencil }
+        stencil_{ stencil },
+        nodes_{}
     {
         for (size_t cur_time = 0; cur_time < NTime; ++cur_time)
         {
@@ -83,23 +86,8 @@ public:
                     int64_t node_idx = NCellCountX * NCellCountY * cur_time + 
                                        y_idx * NCellCountX + x_idx;
 
-                    nodes_[node_idx].init(idx, type_x, type_y, 
-                                          &stencil_, layers_);
-
-                    int64_t add_x = 1;
-                    int64_t add_y = NCellCountX;
-
-                    if (x_idx < NCellCountX - 1)
-                        nodes_[node_idx].depends(nodes_ + (node_idx + add_x));
-
-                    if (y_idx < NCellCountY - 1)
-                        nodes_[node_idx].depends(nodes_ + (node_idx + add_y));
-
-                    if (x_idx < NCellCountX - 1 && y_idx < NCellCountY - 1)
-                    {
-                        nodes_[node_idx].next(nodes_ + 
-                                (node_idx + add_x + add_y));
-                    }
+                    nodes_[node_idx] = TNode(idx, type_x, type_y, 
+                                             &stencil_, layers_);
 
                     idx += TLayer::template off_right<NCellRank>(idx, 1u);
                 }
@@ -109,68 +97,75 @@ public:
         }
     }
 
-    void traverse(WmAbstractExecutor& executor)
+    TNode* access_node(size_t idx) override final
     {
-        static constexpr int64_t NDiagCnt = NCellCountX + NCellCountY - 1;
-        for (int64_t diag = NDiagCnt - 1; diag >= 0; --diag)
-        {
-            int64_t max_x_idx = std::min(diag, NCellCountX - 1);
-            int64_t max_y_idx = std::min(diag, NCellCountY - 1);
-
-            for (int64_t y_idx = max_y_idx, x_idx = diag - y_idx; 
-                 x_idx <= max_x_idx; --y_idx, ++x_idx)
-            {
-                int64_t idx = y_idx * NCellCountY + x_idx;
-                launch(executor, nodes_ + idx);
-            }
-        }
-
-        for (size_t cur_time = 1; cur_time < NTime; ++cur_time)
-        {
-            for (int64_t diag = std::max(NCellCountX, NCellCountY) - 1; 
-                 diag >= 0; --diag)
-            {
-                WM_UNLIKELY if (diag == 0)
-                {
-                    launch(executor, nodes_ + (NCellCountX * NCellCountY * 
-                                               cur_time));
-
-                    continue;
-                }
-
-                WM_LIKELY if (diag < NCellCountX)
-                {
-                    launch(executor, nodes_ + (NCellCountX * NCellCountY * 
-                                               cur_time + diag));
-                }
-
-                WM_LIKELY if (diag < NCellCountY)
-                {
-                    launch(executor, nodes_ + (NCellCountX * NCellCountY * 
-                                               cur_time + NCellCountX * diag));
-                }
-            }
-        }
+        return nodes_ + idx;
     }
 
-    void launch(WmAbstractExecutor& executor, TNode* node)
+    WmGridGraph build_graph() const override final
     {
-        auto proc = [node]() mutable
-        {
-            while (node != nullptr)
-            {
-                node->execute();
-                node = node->proceed();
-            }
-        };
+        static constexpr int64_t NDiagCnt = NCellCountX + NCellCountY - 1;
 
-        executor.enqueue(proc);
+        WmGridGraph graph = {};
+        graph.count = NTime * NCellCountY * NCellCountX;
+        graph.order.reserve(graph.count);
+        graph.graph.resize(graph.count);
+
+        for (size_t cur_time = 0; cur_time < NTime; ++cur_time)
+        {
+            for (int64_t idx = 0; idx < NCellCountY * NCellCountX; ++idx)
+            {
+                int64_t node_idx = 
+                    NCellCountX * NCellCountY * cur_time + idx;
+
+                int64_t x_idx = idx % NCellCountX;
+                int64_t y_idx = idx / NCellCountX;
+
+                int64_t add_x = 1;
+                int64_t add_y = NCellCountX;
+                int64_t add_time = NCellCountY * NCellCountX;
+
+                if (x_idx < NCellCountX - 1)
+                {
+                    graph.graph[node_idx]
+                        .push_back(node_idx + 1);
+                }
+
+                if (y_idx < NCellCountY - 1)
+                {
+                    graph.graph[node_idx]
+                        .push_back(node_idx + add_y);
+                }
+
+                if (x_idx > 0 && y_idx > 0 && cur_time > 0)
+                {
+                    graph.graph[node_idx]
+                        .push_back(node_idx - add_time - add_x - add_y);
+                }
+            }
+
+            for (int64_t diag = NDiagCnt - 1; diag >= 0; --diag)
+            {
+                int64_t max_x_idx = std::min(diag, NCellCountX - 1);
+                int64_t max_y_idx = std::min(diag, NCellCountY - 1);
+
+                for (int64_t y_idx = max_y_idx, x_idx = diag - y_idx; 
+                     x_idx <= max_x_idx; --y_idx, ++x_idx)
+                {
+                    graph.order.push_back(
+                            cur_time * NCellCountY * NCellCountX + 
+                            y_idx * NCellCountY + x_idx);
+                }
+            }
+        }
+
+        return graph;
     }
 
 private:
     TLayer* layers_;
     TStencil& stencil_;
-    TNode nodes_[NCellCountX * NCellCountY * NTime];
+    TNode nodes_[NNodes];
 };
 
 } // namespace wave_model

@@ -10,7 +10,6 @@ public:
 
     virtual ~WmAbstractNode() = default;
     virtual void execute() = 0;
-    virtual WmAbstractNode* proceed() const = 0;
 
 protected:
     WmAbstractNode             (const WmAbstractNode&) = default;
