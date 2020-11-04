@@ -88,7 +88,7 @@ public:
     /**
      * @brief Executes proc_cnt calculation steps
      * @param executor Object to execute grid nodes
-     * @para, proc_cnt Number of steps to do
+     * @param proc_cnt Number of steps to do
      */
     void advance(WmAbstractExecutor& executor, size_t proc_cnt)
     {

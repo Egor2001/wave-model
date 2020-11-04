@@ -2,6 +2,7 @@
 #define WAVE_MODEL_LAYER_GENERAL_ZCURVE_LAYER_H_
 
 #include "logging/macro.h"
+#include "memory/aligned_allocator.h"
 
 #include <vector>
 #include <algorithm>
@@ -239,7 +240,7 @@ public:
     }
 
 private:
-    std::vector<TData> data_vec_;
+    std::vector<TData, WmAlignedAllocator<TData>> data_vec_;
 };
 
 // TODO: to create templatized testing class for any layer type

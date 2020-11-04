@@ -42,6 +42,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
                         -Wno-c++98-compat-pedantic
                         -Wno-padded
                         -Wno-weak-vtables
+                        -Wno-documentation
                         )
 
 else()
