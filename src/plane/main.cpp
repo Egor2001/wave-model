@@ -221,7 +221,7 @@ auto run_parallel(double length, double delta_time, size_t run_count)
                 WmConeFoldGrid2D<
                 WmGeneralZCurveLayer2D<
                     WmBasicWaveData2D, 
-                    1u << NSideRank
+                    NSideRank
                     >, 
                 WmBasicWaveStencil2D, 
                 WmGeneralConeFoldTiling2D<NTileRank>, 
@@ -274,8 +274,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
         // test(WmLogger::stream());
     }
 
-    static constexpr size_t NSideRank = 7;
-    static constexpr size_t NTileRank = 5;
+    static constexpr size_t NSideRank = 8;
+    static constexpr size_t NTileRank = 4;
     static constexpr size_t NRunCount = 100;
 
 #else // defined(WM_BENCHMARK)

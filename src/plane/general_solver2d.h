@@ -22,7 +22,7 @@ public:
 
     using TStencil = TS;
     using TTiling = TT;
-    using TLayer = TL<typename TStencil::TData, 1u << NRankX, 1u << NRankY>;
+    using TLayer = TL<typename TStencil::TData, NRankX, NRankY>;
 
     static constexpr size_t NTileRank = TTiling::NTileRank;
     static constexpr size_t NSizeX = TLayer::NDomainLengthX;

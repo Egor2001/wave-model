@@ -14,29 +14,26 @@
 namespace wave_model {
 
 // TODO: border & PML
-template<class TD, size_t NDX, size_t NDY = NDX>
+template<class TD, size_t NRX, size_t NRY = NRX>
 class WmGeneralZCurveLayer2D
 {
 public:
     struct Test;
 
     using TData = TD;
-    static constexpr int64_t NDomainLengthX = NDX;
-    static constexpr int64_t NDomainLengthY = NDY;
+    static constexpr size_t NDomainRankX = NRX;
+    static constexpr size_t NDomainRankY = NRY;
 
     // TODO: fix the problem with general indexation!
-    static_assert(NDomainLengthX == NDomainLengthY, 
+    static_assert(NDomainRankX == NDomainRankY, 
                   "Only square indexation is currently available.\n"
                   "Use WmGeneralLinearLayer instead temporarily.");
 
-    static_assert(NDomainLengthX && !(NDomainLengthX & (NDomainLengthX - 1)), 
-                  "NDomainLengthX must be 2's power");
+    static_assert(NDomainRankX <= NDomainRankY,
+                  "NDomainRankX must be not greater than NDomainRankY");
 
-    static_assert(NDomainLengthY && !(NDomainLengthY & (NDomainLengthY - 1)), 
-                  "NDomainLengthY must be 2's power");
-
-    static_assert(NDomainLengthX <= NDomainLengthY,
-                  "NDomainLengthX must be not greater than NDomainLengthY");
+    static constexpr int64_t NDomainLengthX = (1u << NDomainRankX);
+    static constexpr int64_t NDomainLengthY = (1u << NDomainRankY);
 
     // TODO: to add encode/decode LUTs for Y or compress Y axis instead of X
     // '01010101' x 8
@@ -245,8 +242,8 @@ private:
 
 // TODO: to create templatized testing class for any layer type
 // to avoid copy-paste
-template<typename TD, size_t NDX, size_t NDY>
-struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
+template<typename TD, size_t NRX, size_t NRY>
+struct WmGeneralZCurveLayer2D<TD, NRX, NRY>::Test
 {
     template<typename TStream>
     struct TestInitFunc
@@ -273,8 +270,8 @@ struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
     static TStream& test_off(TStream& stream)
     {
         stream << "BEGIN WmGeneralZCurveLayer2D<$TData, " << 
-            WmGeneralZCurveLayer2D::NDomainLengthX << 
-            WmGeneralZCurveLayer2D::NDomainLengthY << 
+            WmGeneralZCurveLayer2D::NDomainRankX << 
+            WmGeneralZCurveLayer2D::NDomainRankY << 
             ">::test_off<" << NCellRank << ">()\n";
 
         static constexpr size_t NCnt = 
@@ -307,8 +304,8 @@ struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
         WM_ASSERT(y_dup_rnk == y_dup_cnt, "TEST FAILED");
 
         stream << "END WmGeneralZCurveLayer2D<$TData, " << 
-            WmGeneralZCurveLayer2D::NDomainLengthX << 
-            WmGeneralZCurveLayer2D::NDomainLengthY << 
+            WmGeneralZCurveLayer2D::NDomainRankX << 
+            WmGeneralZCurveLayer2D::NDomainRankY << 
             ">::test_off<" << NCellRank << ">()\n";
 
         return stream;
@@ -322,8 +319,8 @@ struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
             WmGeneralZCurveLayer2D::NDomainLengthY;
 
         stream << "BEGIN WmGeneralZCurveLayer2D<$TData, " << 
-            WmGeneralZCurveLayer2D::NDomainLengthX << 
-            WmGeneralZCurveLayer2D::NDomainLengthY << 
+            WmGeneralZCurveLayer2D::NDomainRankX << 
+            WmGeneralZCurveLayer2D::NDomainRankY << 
             ">::test_init()\n";
 
         WmGeneralZCurveLayer2D layer;
@@ -339,8 +336,8 @@ struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
         WM_ASSERT(call_cnt == NSquare, "TEST FAILED");
 
         stream << "END WmGeneralZCurveLayer2D<$TData, " << 
-            WmGeneralZCurveLayer2D::NDomainLengthX << 
-            WmGeneralZCurveLayer2D::NDomainLengthY << 
+            WmGeneralZCurveLayer2D::NDomainRankX << 
+            WmGeneralZCurveLayer2D::NDomainRankY << 
             ">::test_init()\n";
 
         return stream;
@@ -354,8 +351,8 @@ struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
             WmGeneralZCurveLayer2D::NDomainLengthY;
 
         stream << "BEGIN WmGeneralZCurveLayer2D<$TData, " << 
-            WmGeneralZCurveLayer2D::NDomainLengthX << 
-            WmGeneralZCurveLayer2D::NDomainLengthY << 
+            WmGeneralZCurveLayer2D::NDomainRankX << 
+            WmGeneralZCurveLayer2D::NDomainRankY << 
             ">::test_operator()\n";
 
         WmGeneralZCurveLayer2D layer;
@@ -363,8 +360,8 @@ struct WmGeneralZCurveLayer2D<TD, NDX, NDY>::Test
         static_cast<void>(layer[NSquare - 1]);
 
         stream << "END WmGeneralZCurveLayer2D<$TData, " << 
-            WmGeneralZCurveLayer2D::NDomainLengthX << 
-            WmGeneralZCurveLayer2D::NDomainLengthY << 
+            WmGeneralZCurveLayer2D::NDomainRankX << 
+            WmGeneralZCurveLayer2D::NDomainRankY << 
             ">::test_operator()\n";
 
         return stream;

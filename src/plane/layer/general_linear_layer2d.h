@@ -17,24 +17,21 @@
 namespace wave_model {
 
 // TODO: border & PML
-template<class TD, size_t NDX, size_t NDY = NDX>
+template<class TD, size_t NRX, size_t NRY = NRX>
 class WmGeneralLinearLayer2D
 {
 public:
     struct Test;
 
     using TData = TD;
-    static constexpr int64_t NDomainLengthX = NDX;
-    static constexpr int64_t NDomainLengthY = NDY;
+    static constexpr size_t NDomainRankX = NRX;
+    static constexpr size_t NDomainRankY = NRY;
 
-    static_assert(NDomainLengthX && !(NDomainLengthX & (NDomainLengthX - 1)), 
-                  "NDomainLengthX must be 2's power");
+    static_assert(NDomainRankX <= NDomainRankY,
+                  "NDomainRankX must be not greater than NDomainRankY");
 
-    static_assert(NDomainLengthY && !(NDomainLengthY & (NDomainLengthY - 1)), 
-                  "NDomainLengthY must be 2's power");
-
-    static_assert(NDomainLengthX <= NDomainLengthY,
-                  "NDomainLengthX must be not greater than NDomainLengthY");
+    static constexpr int64_t NDomainLengthX = (1u << NDomainRankX);
+    static constexpr int64_t NDomainLengthY = (1u << NDomainRankY);
 
     //------------------------------------------------------------ 
     template<size_t NCellRank> [[nodiscard]] static constexpr 
@@ -127,8 +124,8 @@ private:
 
 // TODO: to create templatized testing class for any layer type
 // to avoid copy-paste
-template<typename TD, size_t NDX, size_t NDY>
-struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
+template<typename TD, size_t NRX, size_t NRY>
+struct WmGeneralLinearLayer2D<TD, NRX, NRY>::Test
 {
     template<typename TStream>
     struct TestInitFunc
@@ -155,8 +152,8 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
     static TStream& test_off(TStream& stream)
     {
         stream << "BEGIN WmGeneralLinearLayer2D<$TData, " << 
-            WmGeneralLinearLayer2D::NDomainLengthX << ", " <<
-            WmGeneralLinearLayer2D::NDomainLengthY << 
+            WmGeneralLinearLayer2D::NDomainRankX << ", " <<
+            WmGeneralLinearLayer2D::NDomainRankY << 
             ">::test_off<" << NCellRank << ">()\n";
 
         WM_ASSERT(WmGeneralLinearLayer2D::off_bottom<NCellRank>(0, 1) == 
@@ -180,8 +177,8 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
                   "TEST FAILED");
 
         stream << "END WmGeneralLinearLayer2D<$TData, " << 
-            WmGeneralLinearLayer2D::NDomainLengthX << ", " <<
-            WmGeneralLinearLayer2D::NDomainLengthY << 
+            WmGeneralLinearLayer2D::NDomainRankX << ", " <<
+            WmGeneralLinearLayer2D::NDomainRankY << 
             ">::test_off<" << NCellRank << ">()\n";
 
         return stream;
@@ -195,8 +192,8 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
             WmGeneralLinearLayer2D::NDomainLengthX;
 
         stream << "BEGIN WmGeneralLinearLayer2D<$TData, " << 
-            WmGeneralLinearLayer2D::NDomainLengthX << ", " <<
-            WmGeneralLinearLayer2D::NDomainLengthY << 
+            WmGeneralLinearLayer2D::NDomainRankX << ", " <<
+            WmGeneralLinearLayer2D::NDomainRankY << 
             ">::test_init()\n";
 
         WmGeneralLinearLayer2D layer;
@@ -212,8 +209,8 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
         WM_ASSERT(call_cnt == NSquare, "TEST FAILED");
 
         stream << "END WmGeneralLinearLayer2D<$TData, " << 
-            WmGeneralLinearLayer2D::NDomainLengthX << ", " <<
-            WmGeneralLinearLayer2D::NDomainLengthY << 
+            WmGeneralLinearLayer2D::NDomainRankX << ", " <<
+            WmGeneralLinearLayer2D::NDomainRankY << 
             ">::test_init()\n";
 
         return stream;
@@ -227,8 +224,8 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
             WmGeneralLinearLayer2D::NDomainLengthX;
 
         stream << "BEGIN WmGeneralLinearLayer2D<$TData, " << 
-            WmGeneralLinearLayer2D::NDomainLengthX << ", " <<
-            WmGeneralLinearLayer2D::NDomainLengthY << 
+            WmGeneralLinearLayer2D::NDomainRankX << ", " <<
+            WmGeneralLinearLayer2D::NDomainRankY << 
             ">::test_operator()\n";
 
         WmGeneralLinearLayer2D layer;
@@ -236,8 +233,8 @@ struct WmGeneralLinearLayer2D<TD, NDX, NDY>::Test
         static_cast<void>(layer[NSquare - 1]);
 
         stream << "END WmGeneralLinearLayer2D<$TData, " << 
-            WmGeneralLinearLayer2D::NDomainLengthX << ", " <<
-            WmGeneralLinearLayer2D::NDomainLengthY << 
+            WmGeneralLinearLayer2D::NDomainRankX << ", " <<
+            WmGeneralLinearLayer2D::NDomainRankY << 
             ">::test_operator()\n";
 
         return stream;
