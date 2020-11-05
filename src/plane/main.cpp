@@ -245,8 +245,8 @@ auto run_parallel(double length, double delta_time, size_t run_count)
         (length, delta_time, init_func);
 
     // TODO: to fix parallel execution
-    // WmThreadPoolExecutor executor(4);
-    WmSequentialExecutor executor;
+    WmThreadPoolExecutor executor(4);
+    // WmSequentialExecutor executor;
 
     solver->advance(executor, run_count);
 
