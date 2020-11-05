@@ -93,9 +93,8 @@ protected:
         }
         else
         {
-            TTiling::template 
-                proc_fold<NRank, NTypeX, NTypeY>(idx_, *stencil_, 
-                                                 layers_ + TStencil::NDepth);
+            TTiling::template proc_fold<NRank, NTypeX, NTypeY, 0>
+                (idx_, *stencil_, layers_);
         }
     }
 

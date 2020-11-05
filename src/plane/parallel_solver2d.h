@@ -117,12 +117,12 @@ public:
 
             // rotate right to emulate dynamic programming with limited memory
             std::rotate(std::rbegin(layers_arr_), 
-                        std::rbegin(layers_arr_) + TStencil::NDepth, 
+                        std::rbegin(layers_arr_) + NShift, 
                         std::rend(layers_arr_));
         }
 /*
         // rotate left to put result in TStencil::NDepth's position
-        size_t extra_cnt = proc_idx - proc_cnt; 
+        size_t extra_cnt = (proc_idx - proc_cnt) % NMod;
         std::rotate(std::begin(layers_arr_), 
                     std::begin(layers_arr_) + extra_cnt, 
                     std::end(layers_arr_));

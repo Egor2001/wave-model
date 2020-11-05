@@ -300,7 +300,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 #endif // defined(WM_BENCHMARK)
 
     // auto solver = run_scalar     <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
-    // auto solver = run_parallel   <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    auto solver = run_parallel   <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
     // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
     // auto solver = run_vector_axis<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
 
