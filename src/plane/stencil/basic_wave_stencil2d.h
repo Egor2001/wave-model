@@ -33,6 +33,8 @@ class WmBasicWaveStencil2D
 public:
     using TData = WmBasicWaveData2D;
     static constexpr size_t NDepth = 2;
+    constexpr static size_t NMod = NDepth;
+
     static constexpr size_t NTargets = 6;
 
     WmBasicWaveStencil2D(double dspace, double dtime):
@@ -40,9 +42,15 @@ public:
     {}
 
     // TODO: to create enum for sides
-    template<int NXSide, int NYSide, typename TLayer>
+    template<int NXSide, int NYSide, size_t NLayerIdx, typename TLayer>
     void apply(int64_t idx, TLayer* layers) const
     {
+        static constexpr size_t AIdx[] = { 
+            NLayerIdx % NMod, 
+            (NLayerIdx + NMod - 2) % NMod, 
+            (NLayerIdx + NMod - 1) % NMod
+        };
+
         int64_t add_y = TLayer::template off_top<0>(idx, 1);
         int64_t add_x = TLayer::template off_left<0>(idx, 1);
 
@@ -71,15 +79,15 @@ public:
         double courant2 = courant * courant;
 
         // TODO: to distinguish between x and y
-        layers[0][idx] = {
+        layers[AIdx[0]][idx] = {
             /* .intencity = */
-                -layers[-2][idx].intencity + 
-                ((layers[-1][idx + add_y].intencity + 
-                  layers[-1][idx + sub_y].intencity - 
-                  2.0 * layers[-1][idx].intencity) + 
-                 (layers[-1][idx + add_x].intencity + 
-                  layers[-1][idx + sub_x].intencity - 
-                  2.0 * layers[-1][idx].intencity)
+                -layers[AIdx[2]][idx].intencity + 
+                ((layers[AIdx[1]][idx + add_y].intencity + 
+                  layers[AIdx[1]][idx + sub_y].intencity - 
+                  2.0 * layers[AIdx[1]][idx].intencity) + 
+                 (layers[AIdx[1]][idx + add_x].intencity + 
+                  layers[AIdx[1]][idx + sub_x].intencity - 
+                  2.0 * layers[AIdx[1]][idx].intencity)
                  ) * courant2
         };
 

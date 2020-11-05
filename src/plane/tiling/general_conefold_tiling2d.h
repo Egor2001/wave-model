@@ -28,7 +28,7 @@ struct WmGeneralConeFoldTiling2D
     struct Test;
 
     static constexpr size_t NTileRank = NR;
-    static constexpr size_t NDepth = 1u << NTileRank;
+    // static constexpr size_t NDepth = 1u << NTileRank;
 
     enum EType
     {
@@ -85,7 +85,7 @@ struct WmGeneralConeFoldTiling2D
     template<size_t NRank, size_t NQuadIdx, size_t NQuadCnt,
              typename TStencil, typename TGeneralLayer>
     static void traverse_quad(const TStencil& stencil, 
-                              TGeneralLayer* layers) noexcept
+            TGeneralLayer* layers) noexcept
     {
         static constexpr size_t NSquare = 
             TGeneralLayer::NDomainLengthX * TGeneralLayer::NDomainLengthX;
@@ -117,40 +117,41 @@ struct WmGeneralConeFoldTiling2D
         int64_t y_off_2 = TGeneralLayer::template off_bottom<NLess>(NIdx, 2);
 
         // diag 4
-        proc_fold<NLess, TYPE_D, NYTypeD>
+        proc_fold<NLess, TYPE_D, NYTypeD, 0>
             (NIdx + x_off_2 + y_off_2, stencil, layers);
 
         // diag 3
-        proc_fold<NLess, TYPE_B, NYTypeD>
+        proc_fold<NLess, TYPE_B, NYTypeD, 0>
             (NIdx + x_off_1 + y_off_2, stencil, layers);
-        proc_fold<NLess, TYPE_D, NYTypeB>
+        proc_fold<NLess, TYPE_D, NYTypeB, 0>
             (NIdx + x_off_2 + y_off_1, stencil, layers);
 
         // diag 2
-        proc_fold<NLess, TYPE_B, NYTypeB>
+        proc_fold<NLess, TYPE_B, NYTypeB, 0>
             (NIdx + x_off_1 + y_off_1, stencil, layers);
-        proc_fold<NLess, TYPE_A, NYTypeD>
+        proc_fold<NLess, TYPE_A, NYTypeD, 0>
             (NIdx + y_off_2,           stencil, layers);
-        proc_fold<NLess, TYPE_D, NYTypeA>
+        proc_fold<NLess, TYPE_D, NYTypeA, 0>
             (NIdx + x_off_2,           stencil, layers);
 
         // diag 1
-        proc_fold<NLess, TYPE_A, NYTypeB>
+        proc_fold<NLess, TYPE_A, NYTypeB, 0>
             (NIdx + y_off_1,           stencil, layers);
-        proc_fold<NLess, TYPE_B, NYTypeA>
+        proc_fold<NLess, TYPE_B, NYTypeA, 0>
             (NIdx + x_off_1,           stencil, layers);
 
         // diag 0
-        proc_fold<NLess, TYPE_A, NYTypeA>
+        proc_fold<NLess, TYPE_A, NYTypeA, 0>
             (NIdx,                     stencil, layers);
     }
 
-    template<size_t NRank, EType NXType, EType NYType, 
+    template<size_t NRank, EType NXType, EType NYType, size_t NLayerIdx, 
              typename TStencil, typename TGeneralLayer>
     static void proc_fold(int64_t idx, 
             const TStencil& stencil, TGeneralLayer* layers) noexcept
     {
         static constexpr size_t NLess = NRank - 1;
+        static constexpr size_t NMod = TStencil::NDepth;
 
         // TODO: to generate code instead of this
         if constexpr (NXType == TYPE_N || NYType == TYPE_N)
@@ -160,7 +161,7 @@ struct WmGeneralConeFoldTiling2D
 
         if constexpr (NRank == 0u)
         {
-            calc_cell<NXType, NYType>(idx, stencil, layers);
+            calc_cell<NXType, NYType, NLayerIdx>(idx, stencil, layers);
         }
         else
         {
@@ -170,39 +171,41 @@ struct WmGeneralConeFoldTiling2D
             int64_t x_inc = TGeneralLayer::template off_right<NLess>(idx, 1);
             int64_t y_inc = TGeneralLayer::template off_bottom<NLess>(idx, 1);
 
-            proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][1]>
+            proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][1], NLayerIdx>
                 (idx, stencil, layers); // XY
 
-            proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][1]>
+            proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][1], NLayerIdx>
                 (idx + x_dec, stencil, layers); //0Y
 
-            proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][0]>
+            proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][0], NLayerIdx>
                 (idx + y_dec, stencil, layers); // X0
 
-            proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][0]>
+            proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][0], NLayerIdx>
                 (idx + x_dec + y_dec, stencil, layers); // 00
 
             // upper layer
             if constexpr (NRank <= NTileRank)
             {
-                layers += (1 << (NLess));
-
-                proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][3]>
+                proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][3], 
+                          (NLayerIdx + (1 << NLess)) % NMod>
                     (idx + x_inc + y_inc, stencil, layers); // XY
 
-                proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][3]>
+                proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][3], 
+                          (NLayerIdx + (1 << NLess)) % NMod>
                     (idx + y_inc, stencil, layers); //0Y
 
-                proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][2]>
+                proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][2], 
+                          (NLayerIdx + (1 << NLess)) % NMod>
                     (idx + x_inc, stencil, layers); // X0
 
-                proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][2]>
+                proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][2], 
+                          (NLayerIdx + (1 << NLess)) % NMod>
                     (idx, stencil, layers); // 00
             }
         }
     }
 
-    template<EType NXType, EType NYType, 
+    template<EType NXType, EType NYType, size_t NLayerIdx, 
              typename TStencil, typename TGeneralLayer>
     static void calc_cell(int64_t idx, 
             const TStencil& stencil, TGeneralLayer* layers) noexcept
@@ -218,7 +221,7 @@ struct WmGeneralConeFoldTiling2D
         static constexpr int NYSide = 
             static_cast<int>(NYType) - static_cast<int>(TYPE_C);
 
-        stencil.template apply<NXSide, NYSide>(idx, layers);
+        stencil.template apply<NXSide, NYSide, NLayerIdx>(idx, layers);
     }
 };
 
@@ -228,13 +231,17 @@ struct WmGeneralConeFoldTiling2D<NR>::Test
     template<typename TStream>
     struct TestStencil
     {
+        constexpr static size_t NDepth = 1;
+        constexpr static size_t NMod = NDepth;
+
         struct TData {};
 
         explicit TestStencil(TStream& stream_ref):
             stream(stream_ref)
         {}
 
-        template<int NXSide, int NYSide, typename TGeneralLayer>
+        template<int NXSide, int NYSide, size_t NLayerIdx, 
+                 typename TGeneralLayer>
         void apply(size_t idx, [[maybe_unused]] TGeneralLayer* layer) const
         {
             stream << "TestStencil::apply<" << 
@@ -252,7 +259,7 @@ struct WmGeneralConeFoldTiling2D<NR>::Test
         stream << "BEGIN WmGeneralConeFoldTiling2D::Test::test_traverse()\n"; 
         TestStencil<TStream> stencil(stream);
         static TGeneralLayer<typename TestStencil<TStream>::TData, 1u << NRank> 
-            layers[WmGeneralConeFoldTiling2D::NDepth] = {};
+            layers[TestStencil<TStream>::NDepth] = {};
 
         WmGeneralConeFoldTiling2D::traverse<NRank>(stencil, layers);
         stream << "END WmGeneralConeFoldTiling2D::Test::test_traverse()\n";

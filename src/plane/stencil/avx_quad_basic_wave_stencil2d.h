@@ -44,6 +44,8 @@ class alignas(alignof(__m256d)) WmAvxQuadBasicWaveStencil2D
 public:
     using TData = WmAvxQuadBasicWaveData2D;
     static constexpr size_t NDepth = 2;
+    static constexpr size_t NMod = NDepth;
+
     static constexpr size_t NTargets = 6;
 
     WmAvxQuadBasicWaveStencil2D(double dspace, double dtime):
@@ -51,9 +53,15 @@ public:
     {}
 
     // TODO: to create enum for sides
-    template<int NXSide, int NYSide, typename TLayer>
+    template<int NXSide, int NYSide, size_t NLayerIdx, typename TLayer>
     void apply(int64_t idx, TLayer* layers) const
     {
+        static constexpr size_t AIdx[] = { 
+            NLayerIdx % NMod, 
+            (NLayerIdx + NMod - 2) % NMod, 
+            (NLayerIdx + NMod - 1) % NMod
+        };
+
         int64_t add_y = TLayer::template off_top<0>(idx, 1);
         int64_t add_x = TLayer::template off_left<0>(idx, 1);
 
@@ -90,8 +98,8 @@ public:
         // cdCD -> dC
         __m256d sub_x_intencity = 
             _mm256_shuffle_pd(
-                layers[-1][idx + sub_x].intencity, 
-                layers[-1][idx].intencity, 
+                layers[AIdx[1]][idx + sub_x].intencity, 
+                layers[AIdx[1]][idx].intencity, 
                 0b00'00'01'01
                 );
 
@@ -99,8 +107,8 @@ public:
         // CDcd -> Dc
         __m256d add_x_intencity = 
             _mm256_shuffle_pd(
-                layers[-1][idx].intencity, 
-                layers[-1][idx + add_x].intencity, 
+                layers[AIdx[1]][idx].intencity, 
+                layers[AIdx[1]][idx + add_x].intencity, 
                 0b00'00'01'01
                 );
 
@@ -110,8 +118,8 @@ public:
         // CD
         __m256d sub_y_intencity = 
             _mm256_permute2f128_pd(
-                layers[-1][idx + sub_y].intencity, 
-                layers[-1][idx].intencity, 
+                layers[AIdx[1]][idx + sub_y].intencity, 
+                layers[AIdx[1]][idx].intencity, 
                 0b0010'0001
                 );
 
@@ -121,13 +129,13 @@ public:
         // cd
         __m256d add_y_intencity = 
             _mm256_permute2f128_pd(
-                layers[-1][idx].intencity, 
-                layers[-1][idx + add_y].intencity, 
+                layers[AIdx[1]][idx].intencity, 
+                layers[AIdx[1]][idx + add_y].intencity, 
                 0b0010'0001
                 );
 
         // TODO: to distinguish between x and y
-        layers[0][idx] = {
+        layers[AIdx[0]][idx] = {
             /* .intencity = */
             _mm256_sub_pd(
                 _mm256_mul_pd(
@@ -136,18 +144,18 @@ public:
                             _mm256_add_pd(add_y_intencity,
                                           sub_y_intencity),
                             _mm256_mul_pd(_mm256_set1_pd(2.0), 
-                                          layers[-1][idx].intencity)
+                                          layers[AIdx[1]][idx].intencity)
                             ),
                         _mm256_sub_pd(
                             _mm256_add_pd(add_x_intencity,
                                           sub_x_intencity),
                             _mm256_mul_pd(_mm256_set1_pd(2.0), 
-                                          layers[-1][idx].intencity)
+                                          layers[AIdx[1]][idx].intencity)
                             )
                         ), 
                     courant2
                     ),
-                layers[-2][idx].intencity
+                layers[AIdx[2]][idx].intencity
                 )
         };
     }

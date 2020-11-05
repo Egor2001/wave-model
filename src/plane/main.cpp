@@ -65,16 +65,26 @@ auto run_scalar(double length, double delta_time, size_t run_count)
     auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
     { 
         return { 
-            /* .intencity = */ init_wave(x, y) 
+            // .intencity = 
+            init_wave(x, y) 
         }; 
     };
 
-    WmGeneralSolver2D<WmBasicWaveStencil2D, 
-                      WmGeneralConeFoldTiling2D<NTileRank>, 
-                      WmGeneralZCurveLayer2D, NSideRank, NSideRank> 
-        solver(length, delta_time, init_func);
+    auto solver = 
+        std::make_unique<
+            WmGeneralSolver2D<
+                WmBasicWaveStencil2D, 
+                WmGeneralConeFoldTiling2D<
+                    NTileRank
+                    >, 
+                WmGeneralZCurveLayer2D, 
+                NSideRank, 
+                NSideRank
+                > 
+            >
+        (length, delta_time, init_func);
 
-    solver.advance(run_count);
+    solver->advance(run_count);
 
     return solver;
 }
@@ -119,7 +129,9 @@ auto run_vector_axis(double length, double delta_time, size_t run_count)
         std::make_unique<
             WmGeneralSolver2D<
                 WmAvxAxisBasicWaveStencil2D, 
-                WmGeneralConeFoldTiling2D<NTileRank>, 
+                WmGeneralConeFoldTiling2D<
+                    NTileRank
+                    >, 
                 WmGeneralLinearLayer2D, 
                 NSideRank - 2, 
                 NSideRank
@@ -172,7 +184,9 @@ auto run_vector_quad(double length, double delta_time, size_t run_count)
         std::make_unique<
             WmGeneralSolver2D<
                 WmAvxQuadBasicWaveStencil2D, 
-                WmGeneralConeFoldTiling2D<NTileRank>, 
+                WmGeneralConeFoldTiling2D<
+                    NTileRank
+                    >, 
                 WmGeneralLinearLayer2D, 
                 NSideRank - 1, 
                 NSideRank - 1
@@ -276,7 +290,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     static constexpr size_t NSideRank = 8;
     static constexpr size_t NTileRank = 4;
-    static constexpr size_t NRunCount = 100;
+    static constexpr size_t NRunCount = 500;
 
 #else // defined(WM_BENCHMARK)
     static constexpr size_t NSideRank = 12;
@@ -285,7 +299,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 #endif // defined(WM_BENCHMARK)
 
-    auto solver = run_parallel<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    // auto solver = run_scalar     <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    // auto solver = run_parallel   <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
     // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
     // auto solver = run_vector_axis<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
 
