@@ -1,4 +1,4 @@
-// #define WM_BENCHMARK
+#define WM_BENCHMARK
 
 /**
  * @file
@@ -204,7 +204,7 @@ auto run_vector_quad(double length, double delta_time, size_t run_count)
  *
  * Properties:
  * - Solver: parallel
- * - Stencil: Basic 2-order vectorized-by-quad with AVX
+ * - Stencil: Basic 2-order
  * - Data: Linear
  * - Tiling: ConeFold
  * - Initial: Cosine hat
@@ -233,13 +233,79 @@ auto run_parallel(double length, double delta_time, size_t run_count)
         std::make_unique<
             WmParallelSolver2D<
                 WmConeFoldGrid2D<
-                WmGeneralZCurveLayer2D<
-                    WmBasicWaveData2D, 
-                    NSideRank
-                    >, 
-                WmBasicWaveStencil2D, 
-                WmGeneralConeFoldTiling2D<NTileRank>, 
-                NTileRank>
+                    WmGeneralZCurveLayer2D<
+                        WmBasicWaveData2D, 
+                        NSideRank
+                        >, 
+                    WmBasicWaveStencil2D, 
+                    WmGeneralConeFoldTiling2D<
+                        NTileRank
+                        >, 
+                    NTileRank
+                    >
+                >
+            >
+        (length, delta_time, init_func);
+
+    // TODO: to fix parallel execution
+    WmThreadPoolExecutor executor(4);
+    // WmSequentialExecutor executor;
+
+    solver->advance(executor, run_count);
+
+    return solver;
+}
+
+/**
+ * @brief Runs distributed-grid computations with AVX
+ *
+ * Properties:
+ * - Solver: parallel
+ * - Stencil: Basic 2-order vectorized-by-quad with AVX
+ * - Data: Z-order
+ * - Tiling: ConeFold
+ * - Initial: Cosine hat
+ *
+ * @tparam NSideRank Rank of the domain side
+ * @tparam NTileRank Rank of the tiling depth
+ * @param length Domain length
+ * @param delta_time Time discretization delta
+ * @param run_count Number of layer calculation steps
+ */
+template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
+auto run_parallel_avx(double length, double delta_time, size_t run_count)
+{
+    static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
+
+    double delta = length / (1u << (NSideRank - 1));
+    WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    auto init_func = [&init_wave, delta](double x, double y) -> 
+        WmAvxQuadBasicWaveData2D
+    { 
+        return { 
+            // .intencity = 
+            // TODO: to replace delta / 4 with more convenient interface
+                _mm256_setr_pd(init_wave(x - 0.5 * delta, y - 0.5 * delta), 
+                               init_wave(x + 0.5 * delta, y - 0.5 * delta), 
+                               init_wave(x - 0.5 * delta, y + 0.5 * delta), 
+                               init_wave(x + 0.5 * delta, y + 0.5 * delta)) 
+        }; 
+    };
+
+    auto solver = 
+        std::make_unique<
+            WmParallelSolver2D<
+                WmConeFoldGrid2D<
+                    WmGeneralZCurveLayer2D<
+                        WmAvxQuadBasicWaveData2D, 
+                        NSideRank - 1
+                        >, 
+                    WmAvxQuadBasicWaveStencil2D, 
+                    WmGeneralConeFoldTiling2D<
+                        NTileRank - 1
+                        >, 
+                    NTileRank - 1
+                    >
                 >
             >
         (length, delta_time, init_func);
@@ -293,14 +359,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     static constexpr size_t NRunCount = 500;
 
 #else // defined(WM_BENCHMARK)
-    static constexpr size_t NSideRank = 12;
-    static constexpr size_t NTileRank = 3;
+    static constexpr size_t NSideRank = 10;
+    static constexpr size_t NTileRank = 5;
     static constexpr size_t NRunCount = 500;
 
 #endif // defined(WM_BENCHMARK)
 
     // auto solver = run_scalar     <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
-    auto solver = run_parallel   <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    // auto solver = run_parallel   <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    auto solver = run_parallel_avx<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
     // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
     // auto solver = run_vector_axis<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
 
