@@ -22,12 +22,26 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
 
     add_compile_options(-Wall -w3 
-        -Warray-bounds -Wchar-subscripts -Wcomment -Wenum-compare 
-        -Wformat -Wuninitialized -Wmaybe-uninitialized -Wmain -Wnarrowing 
-        -Wnonnull -Wparentheses -Wpointer-sign -Wreorder -Wreturn-type 
-        -Wsign-compare -Wsequence-point -Wtrigraphs -Wunused-function 
-        -Wunused-but-set-variable -Wunused-variable -Wwrite-strings
-        )
+                        -Warray-bounds 
+                        -Wchar-subscripts 
+                        -Wcomment 
+                        -Wenum-compare 
+                        -Wformat 
+                        -Wuninitialized 
+                        -Wmaybe-uninitialized 
+                        -Wmain -Wnarrowing 
+                        -Wnonnull -Wparentheses 
+                        -Wpointer-sign 
+                        -Wreorder 
+                        -Wreturn-type 
+                        -Wsign-compare 
+                        -Wsequence-point 
+                        -Wtrigraphs 
+                        -Wunused-function 
+                        -Wunused-but-set-variable 
+                        -Wunused-variable 
+                        -Wwrite-strings
+                        )
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR 
        CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")

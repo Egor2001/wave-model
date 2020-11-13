@@ -14,6 +14,7 @@
 
 #include "general_solver2d.h"
 #include "parallel_solver2d.h"
+#include "openmp_solver2d.h"
 #include "logging/macro.h"
 #include "logging/logger.h"
 
@@ -319,6 +320,59 @@ auto run_parallel_avx(double length, double delta_time, size_t run_count)
     return solver;
 }
 
+/**
+ * @brief Runs distributed-grid computations via OpenMP
+ *
+ * Properties:
+ * - Solver: openmp
+ * - Stencil: Basic 2-order
+ * - Data: Linear
+ * - Tiling: ConeFold
+ * - Initial: Cosine hat
+ *
+ * @tparam NSideRank Rank of the domain side
+ * @tparam NTileRank Rank of the tiling depth
+ * @param length Domain length
+ * @param delta_time Time discretization delta
+ * @param run_count Number of layer calculation steps
+ */
+template<size_t NSideRank, size_t NTileRank = NSideRank - 2>
+auto run_openmp(double length, double delta_time, size_t run_count)
+{
+    static_assert(!(NSideRank < NTileRank), "side must not be less than tile");
+
+    WmCosineHatWave2D init_wave { /* .ampl = */ 1.0, /* .freq = */ 0.5 };
+    auto init_func = [&init_wave](double x, double y) -> WmBasicWaveData2D
+    { 
+        return { 
+            // .intencity = 
+            init_wave(x, y) 
+        }; 
+    };
+
+    auto solver = 
+        std::make_unique<
+            WmOpenMPSolver2D<
+                WmConeFoldGrid2D<
+                    WmGeneralZCurveLayer2D<
+                        WmBasicWaveData2D, 
+                        NSideRank
+                        >, 
+                    WmBasicWaveStencil2D, 
+                    WmGeneralConeFoldTiling2D<
+                        NTileRank
+                        >, 
+                    NTileRank
+                    >
+                >
+            >
+        (length, delta_time, init_func);
+
+    solver->advance(run_count);
+
+    return solver;
+}
+
 /*
 template<typename TStream>
 TStream& test(TStream& stream)
@@ -356,20 +410,21 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
     static constexpr size_t NSideRank = 8;
     static constexpr size_t NTileRank = 4;
-    static constexpr size_t NRunCount = 500;
+    static constexpr size_t NRunCnt = 500;
 
 #else // defined(WM_BENCHMARK)
     static constexpr size_t NSideRank = 10;
     static constexpr size_t NTileRank = 5;
-    static constexpr size_t NRunCount = 500;
+    static constexpr size_t NRunCnt = 500;
 
 #endif // defined(WM_BENCHMARK)
 
-    // auto solver = run_scalar     <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
-    // auto solver = run_parallel   <NSideRank, NTileRank>(1e2, 0.1, NRunCount);
-    auto solver = run_parallel_avx<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
-    // auto solver = run_vector_quad<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
-    // auto solver = run_vector_axis<NSideRank, NTileRank>(1e2, 0.1, NRunCount);
+    // auto solver = run_scalar      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    auto solver = run_parallel    <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    // auto solver = run_parallel_avx<NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    // auto solver = run_openmp      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    // auto solver = run_vector_quad <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    // auto solver = run_vector_axis <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
 
 #if !defined(WM_BENCHMARK)
     solver->layer().dump(out_stream);
