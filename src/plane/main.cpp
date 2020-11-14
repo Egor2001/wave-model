@@ -420,9 +420,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 #endif // defined(WM_BENCHMARK)
 
     // auto solver = run_scalar      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
-    auto solver = run_parallel    <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    // auto solver = run_parallel    <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
     // auto solver = run_parallel_avx<NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
-    // auto solver = run_openmp      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    auto solver = run_openmp      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
     // auto solver = run_vector_quad <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
     // auto solver = run_vector_axis <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
 
