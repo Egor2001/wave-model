@@ -1,0 +1,11 @@
+\beamer@slide {titular}{1}
+\beamer@slide {introductory}{2}
+\beamer@slide {goals}{3}
+\beamer@slide {methods-local}{4}
+\beamer@slide {methods-parallel}{5}
+\beamer@slide {data-order}{6}
+\beamer@slide {tiling}{7}
+\beamer@slide {vectorization}{8}
+\beamer@slide {multithread}{9}
+\beamer@slide {conclusion}{11}
+\beamer@slide {materials}{12}
