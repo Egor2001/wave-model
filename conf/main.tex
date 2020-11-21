@@ -2,10 +2,11 @@
 % Titular frame
 % Introductory frame
 % Goals and objectives frame
-% Methods employed frame
-% Main part frames
+% C++17 implementation
+% Vectorization (AVX)
+% Parallelization (std::threads/OpenMP)
 % Conclusion frame
-% [Final frame]
+% Materials frame
 % 
 % FONT REQUIREMENTS:
 % Serif fonts (Georgia, Palatino, Times New Roman)
@@ -20,7 +21,6 @@
 \usepackage[english,russian]{babel}
 \usepackage{amsmath,amsfonts,amssymb}
 \usepackage{geometry}
-\geometry{textwidth=24pt}
 
 % Set serif font
 \renewcommand{\familydefault}{\sfdefault}
@@ -30,15 +30,13 @@
 
 \begin{document}
 
-\title[Оптимизация LRnLA]{Оптимизация решения систем линейных уравнений 
-	на двумерной сетке с использованием вных численных схем}
+\title[Оптимизация LRnLA]{Оптимизация решения систем дифференциальных уравнений 
+	на двумерной сетке с использованием явных численных схем}
 \subtitle{LXIII конференция МФТИ}
 \author[Ельчинов]{Ельчинов Е. С.\inst{1} \and
-									% Хохлов Н. И. \inst{1} \and
 									Кудринский А. М.\inst{2}}
 \institute[МФТИ]{МФТИ (ГУ) \\
 	\vspace{1ex}
-	% TODO: как и куда записывать, coавтор / научрук?
 	Научный руководитель~--- Хохлов Н. И., к.ф.-м.н., с.н.с., зам. зав. лаб. \\
 	(Лаборатория прикладной вычислительной геофизики МФТИ)
 	\vspace{1ex}
@@ -52,7 +50,7 @@
 \end{frame}
 
 % Introductory frame
-\begin{frame}[t]
+\begin{frame}[fragile,t]
 	\label{introductory}
 	\frametitle{Постановка проблемы и актуальность}
 
@@ -62,213 +60,230 @@
 
 	\begin{columns}
 
-	\column{0.5\textwidth}
-		\begin{alertblock}{}
-			\vspace{120pt}
+	\column{0.6\textwidth}
+		\begin{alertblock}{Наивное решение}
+			\begin{verbatim}
+			for (T = 0; T <= MAX_TIME; ++T) {
+			  for (X = 0; X <= MAX_X; ++X) {
+			    for (Y = 0; Y <= MAY_Y; ++Y) {
+			      ...
+			      calculate(X, Y, dx, dy, dt);
+			      ...
+			    }
+			  }
+			}
+			\end{verbatim}
 		\end{alertblock}
 
-	\column{0.4\textwidth}
+	\column{0.3\textwidth}
 		\begin{block}{Характерные параметры}
 			% TODO: уточнить параметры!!!
 			\begin{itemize}
 				\vspace{1ex}
-				\item{$\sim 1\,000\,000\,000$ \\ узлов сетки}
+				\item{$\sim 1\,000\,000\,000$ узлов сетки}
 
 				\vspace{1ex}
-				\item{$\sim 1\,000\,000$ \\ временных слоев}
+				\item{$\sim 1\,000\,000$ временн\'{ы}х слоев}
 
 				\vspace{1ex}
-				\item{$\sim 1\,000$ \\ задач моделирования}
+				\item{$\sim 1\,000$ задач моделирования}
 			\end{itemize}
 		\end{block}
 
 	\end{columns}
 \end{frame}
 
-% Goals and objectives frame
+% TODO
+% Goals & objectives frame
 \begin{frame}[t]
 	\label{goals}
 	\frametitle{Цели и задачи}
 
 	\begin{block}{Цель}
-		Поиск и сравнение эффективности алгоритмов решения задачи
+		Использование современного C++, возможностей современных процессоров и 
+		кэша в оптимизации цикла вычислений.
 	\end{block}
 
 	\begin{columns}
 
-	\column{0.3\textwidth}
-		\begin{block}{Конфигурация алгоритма}
+	\column{0.4\textwidth}
+		\begin{block}{CPU}
+			\begin{itemize}
+				\item AVX
+				\item 4, 6, 8, 10\ldots ядер
+				\item потоки внутри ядра
+				\item L1, L2, L3 кэши
+				\item предвыборка команд
+			\end{itemize}
 		\end{block}
 
-		\begin{alertblock}{Начальные условия}
-			\vspace{80pt}
-		\end{alertblock}
-
-	\column{0.2\textwidth}
-
-		\begin{block}{Программный пакет}
-			\vspace{80pt}
+	\column{0.4\textwidth}
+		\begin{block}{C++}
+			\begin{itemize}
+				\item шаблоны
+				\item constexpr~-- функции
+				\item if constexpr
+				\item Thread support library
+				\item интеграция с OpenMP
+			\end{itemize}
 		\end{block}
 
-	\column{0.3\textwidth}
-
-		\begin{block}{Характеристики эффективности}
-		\end{block}
-
-		\begin{alertblock}{Решение задачи}
-			\vspace{80pt}
-		\end{alertblock}
-
 	\end{columns}
 \end{frame}
 
-% Methods employed frame
-\begin{frame}[t]
-	\label{methods-local}
-	\frametitle{Используемые методы}
-	\framesubtitle{Локализация данных}
-
-	\begin{columns}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{Порядок вершин}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item Линейный порядок
-			\item Z~-- порядок
-		\end{itemize}
-
-	\column{0.1\textwidth}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{Тайлинг}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item ConeFold
-			\item DiamondTorre
-		\end{itemize}
-
-	\end{columns}
-\end{frame}
-
-% Methods employed frame
-\begin{frame}[t]
-	\label{methods-parallel}
-	\frametitle{Используемые методы}
-	\framesubtitle{Параллельные вычисления}
-
-	\begin{columns}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{Векторизация}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item AVX, шаблон $2 \times 2$
-			\item AVX, шаблон $1 \times 4$
-		\end{itemize}
-
-	\column{0.1\textwidth}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{Многопоточность}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item std::thread (C++17)
-			\item стандарт OpenMP
-		\end{itemize}
-
-	\end{columns}
-\end{frame}
-
-% Main part frames
-\begin{frame}[t]
-	\label{data-order}
-	\frametitle{Способы хранения данных}
-
-	\begin{columns}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{Линейный порядок}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item Простые расчеты
-			\item Невысокая локальность
-		\end{itemize}
-
-	\column{0.1\textwidth}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{Z~-- порядок}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item Более сложные расчеты
-			\item Высокая локальность
-		\end{itemize}
-
-	\end{columns}
-\end{frame}
-
+% Tiling algorithms
 \begin{frame}[t]
 	\label{tiling}
 	\frametitle{Алгоритмы тайлинга}
 
 	\begin{columns}
 
-	\column{0.4\textwidth}
-		\begin{alertblock}{ConeFold}
-			\vspace{120pt}
+	\column{0.45\textwidth}
+		\begin{block}{ConeFold}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/CropConeFold.png}
+			\end{figure}
+
+			% \begin{itemize}
+			%		\item Локально~-- рекурсивный
+			%		\item Средняя асинхронность
+			% \end{itemize}
+		\end{block}
+
+		\begin{block}{DiamondTorre}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/CropDiamondTorre.png}
+			\end{figure}
+
+			% \begin{itemize}
+			% 	\item Нерекурсивный
+			% 	\item Высокая асинхронность
+			% \end{itemize}
+		\end{block}
+
+	\column{0.5\textwidth}
+		\begin{alertblock}{Зависимость времени работы от размера сетки}
+			\vspace{160pt}
 		\end{alertblock}
-
-		\begin{itemize}
-			\item Локально~-- рекурсивный
-			\item Средняя асинхронность
-		\end{itemize}
-
-	\column{0.1\textwidth}
-
-	\column{0.4\textwidth}
-		\begin{alertblock}{DiamondTorre}
-			\vspace{120pt}
-		\end{alertblock}
-
-		\begin{itemize}
-			\item Нерекурсивный
-			\item Высокая асинхронность
-		\end{itemize}
 
 	\end{columns}
 \end{frame}
 
-\begin{frame}
+% Vectorization
+\begin{frame}[t]
 	\label{vectorization}
-	\frametitle{Виды локальных шаблонов и векторизация}
+	\frametitle{Векторизация}
+
+	\begin{columns}
+
+	\column{0.45\textwidth}
+		\begin{block}{AVX, шаблон $2 \times 2$}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/CropAVX2x2.png}
+			\end{figure}
+		\end{block}
+
+		\begin{block}{AVX, шаблон $1 \times 4$}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/CropAVX1x4.png}
+			\end{figure}
+		\end{block}
+
+	\column{0.5\textwidth}
+		\begin{alertblock}{Зависимость времени работы от размера сетки}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/GraphAVX.png}
+			\end{figure}
+		\end{alertblock}
+
+	\end{columns}
 \end{frame}
 
-\begin{frame}
+% Multithread computations
+\begin{frame}[t]
 	\label{multithread}
-	\frametitle{Многопоточная обработка}
+	\frametitle{Многопоточные вычисления}
+	\framesubtitle{Сравнение производительности}
+
+	\begin{columns}
+
+	\column{0.45\textwidth}
+		\begin{block}{C++17 Thread support library}
+			\vspace{150pt}
+		\end{block}
+
+	\column{0.45\textwidth}
+		\begin{block}{Стандарт OpenMP 4.5}
+			\vspace{150pt}
+		\end{block}
+
+	\end{columns}
 \end{frame}
 
-\begin{frame}
-	\frametitle{Результаты}
+%-------------------------------------------------------------------------------
+
+% Data order
+\begin{frame}[t]
+	\label{data-order}
+	\frametitle{Способы хранения данных}
+
+	\begin{columns}
+
+	\column{0.45\textwidth}
+		\begin{block}{Линейный порядок}
+			\begin{itemize}
+				\item Простые расчеты
+				\item Невысокая локальность
+			\end{itemize}
+		\end{block}
+
+		\begin{alertblock}{Зависимость времени работы от размера сетки}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/GraphOrder.png}
+			\end{figure}
+		\end{alertblock}
+
+	\column{0.45\textwidth}
+		\begin{block}{Z~-- порядок}
+			\begin{itemize}
+				\item Более сложные расчеты
+				\item Высокая локальность
+			\end{itemize}
+
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/ZOrderCurve.png}
+			\end{figure}
+		\end{block}
+
+	\end{columns}
 \end{frame}
+
 
 % Conclusion frame
 \begin{frame}
 	\label{conclusion}
-	\frametitle{Заключение}
+	\frametitle{Результаты}
+	\framesubtitle{Зависимость времени работы от размера сетки}
+
+	\begin{columns}
+
+	\column{0.45\textwidth}
+		\begin{block}{Однопоточная версия}
+			\vspace{150pt}
+			% \begin{figure}
+				% \includegraphics[width=\textwidth]{img/.png}
+			% \end{figure}
+		\end{block}
+
+	\column{0.45\textwidth}
+		\begin{block}{Многопоточная версия}
+			\vspace{150pt}
+			% \begin{figure}
+				% \includegraphics[width=\textwidth]{img/.png}
+			% \end{figure}
+		\end{block}
+
+	\end{columns}
 \end{frame}
 
 % Materials frame
