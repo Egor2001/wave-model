@@ -17,6 +17,7 @@
 #include "openmp_solver2d.h"
 #include "logging/macro.h"
 #include "logging/logger.h"
+#include "logging/bench.h"
 
 #include "layer/general_linear_layer2d.h"
 #include "layer/general_zcurve_layer2d.h"
@@ -417,17 +418,23 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
     static constexpr size_t NTileRank = 5;
     static constexpr size_t NRunCnt = 500;
 
+    // {
+        // WmBench<std::ostream> bench(std::cout, "");
+
 #endif // defined(WM_BENCHMARK)
 
     // auto solver = run_scalar      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
     // auto solver = run_parallel    <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
-    // auto solver = run_parallel_avx<NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
-    auto solver = run_openmp      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    auto solver = run_parallel_avx<NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
+    // auto solver = run_openmp      <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
     // auto solver = run_vector_quad <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
     // auto solver = run_vector_axis <NSideRank, NTileRank>(1e2, 0.1, NRunCnt);
 
 #if !defined(WM_BENCHMARK)
     solver->layer().dump(out_stream);
+
+#else // defined(WM_BENCHMARK)
+    // }
 
 #endif // defined(WM_BENCHMARK)
 
