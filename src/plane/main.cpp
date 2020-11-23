@@ -23,6 +23,7 @@
 #include "stencil/basic_wave_stencil2d.h"
 #include "stencil/avx_axis_basic_wave_stencil2d.h"
 #include "stencil/avx_quad_basic_wave_stencil2d.h"
+#include "tiling/general_regular_tiling2d.h"
 #include "tiling/general_conefold_tiling2d.h"
 #include "tiling/general_diamondtorre_tiling2d.h"
 
@@ -76,9 +77,7 @@ auto run_scalar(double length, double delta_time, size_t run_count)
         std::make_unique<
             WmGeneralSolver2D<
                 WmBasicWaveStencil2D, 
-                WmGeneralConeFoldTiling2D<
-                    NTileRank
-                    >, 
+                WmGeneralRegularTiling2D,
                 WmGeneralZCurveLayer2D, 
                 NSideRank, 
                 NSideRank
