@@ -36,49 +36,52 @@ struct WmGeneralDiamondTorreTiling2D
     struct Test;
 
     static constexpr size_t NTileRank = NR;
-    static constexpr size_t NTileSize = 1u << NTileRank;
+    static constexpr int64_t NTileSize = 1u << NTileRank;
 
     static_assert(NTileRank > 0, "NTileRank must be positive");
 
-    enum ELine
+    enum ELine : uint8_t
     {
         LINE_R, LINE_L
     };
 
-    enum EType
+    enum EType : uint8_t
     {
         TYPE_A, TYPE_B, TYPE_C, TYPE_D, 
         TYPE_N
     };
 
-    enum EOffset
+    enum EOffset : uint8_t
     {
         OFFSET_A, OFFSET_B, OFFSET_C, OFFSET_D, OFFSET_E, OFFSET_F, OFFSET_G, 
         OFFSET_N
-    }
-
-    static constexpr EType TopTypeArr[] = {
-        /* [NType == TYPE_A] = */ TYPE_N;
-        /* [NType == TYPE_B] = */ TYPE_B;
-        /* [NType == TYPE_C] = */ TYPE_B;
-        /* [NType == TYPE_D] = */ TYPE_C;
     };
 
-    static constexpr EType MiddleTypeArr[] = {
-        /* [NType == TYPE_A] = */ TYPE_A;
-        /* [NType == TYPE_B] = */ TYPE_B;
-        /* [NType == TYPE_C] = */ TYPE_B;
-        /* [NType == TYPE_D] = */ TYPE_D;
+    static constexpr EType TopTypeArr[5] = {
+        /* [NType == TYPE_A] = */ TYPE_N,
+        /* [NType == TYPE_B] = */ TYPE_B,
+        /* [NType == TYPE_C] = */ TYPE_B,
+        /* [NType == TYPE_D] = */ TYPE_C,
+        /* [NType == TYPE_N] = */ TYPE_N
     };
 
-    static constexpr EType BottomTypeArr[] = {
-        /* [NType == TYPE_A] = */ TYPE_B;
-        /* [NType == TYPE_B] = */ TYPE_B;
-        /* [NType == TYPE_C] = */ TYPE_C;
-        /* [NType == TYPE_D] = */ TYPE_N;
+    static constexpr EType MiddleTypeArr[5] = {
+        /* [NType == TYPE_A] = */ TYPE_A,
+        /* [NType == TYPE_B] = */ TYPE_B,
+        /* [NType == TYPE_C] = */ TYPE_B,
+        /* [NType == TYPE_D] = */ TYPE_D,
+        /* [NType == TYPE_N] = */ TYPE_N
     };
 
-    static constexpr EOffset LeftOffsetArr[] = {
+    static constexpr EType BottomTypeArr[5] = {
+        /* [NType == TYPE_A] = */ TYPE_B,
+        /* [NType == TYPE_B] = */ TYPE_B,
+        /* [NType == TYPE_C] = */ TYPE_C,
+        /* [NType == TYPE_D] = */ TYPE_N,
+        /* [NType == TYPE_N] = */ TYPE_N
+    };
+
+    static constexpr EOffset LeftOffsetArr[8] = {
         /* [OFFSET_A] = */ OFFSET_N,
         /* [OFFSET_B] = */ OFFSET_A,
         /* [OFFSET_C] = */ OFFSET_C,
@@ -86,9 +89,10 @@ struct WmGeneralDiamondTorreTiling2D
         /* [OFFSET_E] = */ OFFSET_C,
         /* [OFFSET_F] = */ OFFSET_D,
         /* [OFFSET_G] = */ OFFSET_F,
+        /* [OFFSET_N] = */ OFFSET_N
     };
 
-    static constexpr EOffset HalfLeftOffsetArr[] = {
+    static constexpr EOffset HalfLeftOffsetArr[8] = {
         /* [OFFSET_A] = */ OFFSET_N,
         /* [OFFSET_B] = */ OFFSET_B,
         /* [OFFSET_C] = */ OFFSET_C,
@@ -96,9 +100,10 @@ struct WmGeneralDiamondTorreTiling2D
         /* [OFFSET_E] = */ OFFSET_C,
         /* [OFFSET_F] = */ OFFSET_E,
         /* [OFFSET_G] = */ OFFSET_G,
+        /* [OFFSET_N] = */ OFFSET_N
     };
 
-    static constexpr EOffset MiddleOffsetArr[] = {
+    static constexpr EOffset MiddleOffsetArr[8] = {
         /* [OFFSET_A] = */ OFFSET_A,
         /* [OFFSET_B] = */ OFFSET_C,
         /* [OFFSET_C] = */ OFFSET_C,
@@ -106,9 +111,10 @@ struct WmGeneralDiamondTorreTiling2D
         /* [OFFSET_E] = */ OFFSET_D,
         /* [OFFSET_F] = */ OFFSET_F,
         /* [OFFSET_G] = */ OFFSET_N,
+        /* [OFFSET_N] = */ OFFSET_N
     };
 
-    static constexpr EOffset HalfRightOffsetArr[] = {
+    static constexpr EOffset HalfRightOffsetArr[8] = {
         /* [OFFSET_A] = */ OFFSET_B,
         /* [OFFSET_B] = */ OFFSET_C,
         /* [OFFSET_C] = */ OFFSET_C,
@@ -116,9 +122,10 @@ struct WmGeneralDiamondTorreTiling2D
         /* [OFFSET_E] = */ OFFSET_E,
         /* [OFFSET_F] = */ OFFSET_G,
         /* [OFFSET_G] = */ OFFSET_N,
+        /* [OFFSET_N] = */ OFFSET_N
     };
 
-    static constexpr EOffset RightOffsetArr[] = {
+    static constexpr EOffset RightOffsetArr[8] = {
         /* [OFFSET_A] = */ OFFSET_C,
         /* [OFFSET_B] = */ OFFSET_C,
         /* [OFFSET_C] = */ OFFSET_C,
@@ -126,9 +133,9 @@ struct WmGeneralDiamondTorreTiling2D
         /* [OFFSET_E] = */ OFFSET_F,
         /* [OFFSET_F] = */ OFFSET_N,
         /* [OFFSET_G] = */ OFFSET_N,
+        /* [OFFSET_N] = */ OFFSET_N
     };
 
-    // TODO: to generate code for the each case
     template<size_t NRank, typename TStencil, typename TGeneralLayer>
     static void traverse(const TStencil& stencil, TGeneralLayer* layers) 
                          noexcept
@@ -217,7 +224,7 @@ struct WmGeneralDiamondTorreTiling2D
              row > 0; row -= NTileSize)
         {
             idx += TGeneralLayer::template 
-                off_top<NTileRank>(right_idx, 1);
+                off_top<NTileRank>(idx, 1);
 
             proc_pole<NRank, NOffset, TYPE_B>
                 (coord, idx, layer_idx, stencil, layers);
@@ -226,7 +233,7 @@ struct WmGeneralDiamondTorreTiling2D
         if constexpr (NType == LINE_L)
         {
             idx += TGeneralLayer::template 
-                off_top<NTileRank>(right_idx, 1);
+                off_top<NTileRank>(idx, 1);
 
             proc_pole<NRank, NOffset, TYPE_A>
                 (coord, idx, layer_idx, stencil, layers);
@@ -251,7 +258,7 @@ struct WmGeneralDiamondTorreTiling2D
         coord += NTileSize;
         for (; coord < max_coord; coord += NTileSize)
         {
-            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            idx += TGeneralLayer::template off_right<NTileRank>(idx, 1);
             call_fold<TStencil::NMod - 1, OFFSET_C, NType>
                 (idx, layer_idx, stencil, layers);
             layer_idx += NTileSize;
@@ -259,24 +266,24 @@ struct WmGeneralDiamondTorreTiling2D
 
         if (coord < TGeneralLayer::NDomainLengthX - NTileSize / 2)
         {
-            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            idx += TGeneralLayer::template off_right<NTileRank>(idx, 1);
             call_fold<TStencil::NMod - 1, OFFSET_D, NType>
                 (idx, layer_idx, stencil, layers);
             layer_idx += NTileSize;
 
-            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            idx += TGeneralLayer::template off_right<NTileRank>(idx, 1);
             call_fold<TStencil::NMod - 1, OFFSET_F, NType>
                 (idx, layer_idx, stencil, layers);
             layer_idx += NTileSize;
         }
         else
         {
-            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            idx += TGeneralLayer::template off_right<NTileRank>(idx, 1);
             call_fold<TStencil::NMod - 1, OFFSET_E, NType>
                 (idx, layer_idx, stencil, layers);
             layer_idx += NTileSize;
 
-            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            idx += TGeneralLayer::template off_right<NTileRank>(idx, 1);
             call_fold<TStencil::NMod - 1, OFFSET_G, NType>
                 (idx, layer_idx, stencil, layers);
             layer_idx += NTileSize;
@@ -291,7 +298,7 @@ struct WmGeneralDiamondTorreTiling2D
     {
         if (layer_idx == NLayerIdx)
         {
-            proc_fold<NTileRank, NOffset, NLayerIdx, NType>
+            proc_fold<NTileRank, NLayerIdx, NOffset, NType>
                 (idx, stencil, layers);
         }
         else if constexpr (NLayerIdx != 0)
@@ -332,14 +339,14 @@ struct WmGeneralDiamondTorreTiling2D
             int64_t x_sub = TGeneralLayer::template off_left<NLess>(idx, 1);
             int64_t x_add = TGeneralLayer::template off_right<NLess>(idx, 1);
 
-            calc_cell<NLayerIdx, NMiddleOffset, NMiddleType>
+            calc_cell<NLayerIdx, NMiddleOffset, NType>
                 (idx, stencil, layers);
-            calc_cell<NLayerIdx, NLeftOffset, NMiddleType>
+            calc_cell<NLayerIdx, NLeftOffset, NType>
                 (idx + x_sub, stencil, layers);
 
-            calc_cell<NNextLayerIdx, NRightOffset, NMiddleType>
+            calc_cell<NNextLayerIdx, NRightOffset, NType>
                 (idx + x_add, stencil, layers);
-            calc_cell<NNextLayerIdx, NMiddleOffset, NMiddleType>
+            calc_cell<NNextLayerIdx, NMiddleOffset, NType>
                 (idx, stencil, layers);
         }
         else
@@ -379,7 +386,7 @@ struct WmGeneralDiamondTorreTiling2D
         }
     }
 
-    template<size_t NLayerIdx, int NOffset, EType NType, 
+    template<size_t NLayerIdx, EOffset NOffset, EType NType, 
              typename TStencil, typename TGeneralLayer>
     static void calc_cell(int64_t idx, 
                           const TStencil& stencil, TGeneralLayer* layers) 
@@ -391,11 +398,11 @@ struct WmGeneralDiamondTorreTiling2D
             return;
 
         static constexpr int NXSide = []() -> int {
-            if constexpr (NType == OFFSET_A) return -1;
-            if constexpr (NType == OFFSET_B) return -1;
-            if constexpr (NType == OFFSET_C) return 0;
-            if constexpr (NType == OFFSET_D) return 1;
-            if constexpr (NType == OFFSET_E) return 1;
+            if constexpr (NOffset == OFFSET_A) return -1;
+            if constexpr (NOffset == OFFSET_B) return -1;
+            if constexpr (NOffset == OFFSET_C) return 0;
+            if constexpr (NOffset == OFFSET_D) return 1;
+            if constexpr (NOffset == OFFSET_E) return 1;
 
             return 0;
         }();
@@ -407,6 +414,9 @@ struct WmGeneralDiamondTorreTiling2D
 
             return 0;
         }();
+
+        idx += TGeneralLayer::template off_right<0>(idx, 1) + 
+               TGeneralLayer::template off_bottom<0>(idx, 1);
 
         stencil.template apply<NXSide, NYSide, NLayerIdx>(idx, layers);
     }
