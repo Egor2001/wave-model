@@ -10,9 +10,25 @@
 
 namespace wave_model {
 
-// [ 00 ]
-// [0000]
-// [ 0X ]
+// TYPES
+// [x]______AA|___
+// [0] ... AAA|A
+// [1]      AA|BB
+// [2] ...   B|BBB
+// [3]      BB|BB
+// [4] ... BBB|B  
+// [5]      BB|CC 
+// [6] ...   C|CCC
+// [7]______DD|CC_
+// [x]     DDD|D
+// [x]      DD|
+
+// OFFSETS
+// [...]      AA|                  DD  FF|
+// [...] ... AAA|A        CC      DDDDFFF|F
+// [...]      AA|BB  ... CCCC ...  DDEEFF|GG
+// [...] ...   B|BBB      CC        EEEEG|GGG
+// [...]        |BB                  EE  |GG
 
 template<size_t NR>
 struct WmGeneralDiamondTorreTiling2D
@@ -20,211 +36,391 @@ struct WmGeneralDiamondTorreTiling2D
     struct Test;
 
     static constexpr size_t NTileRank = NR;
-    // static constexpr size_t NDepth = 1u << NTileRank;
+    static constexpr size_t NTileSize = 1u << NTileRank;
 
     static_assert(NTileRank > 0, "NTileRank must be positive");
 
+    enum ELine
+    {
+        LINE_R, LINE_L
+    };
+
     enum EType
     {
-        TYPE_A, TYPE_B, TYPE_C, TYPE_N
+        TYPE_A, TYPE_B, TYPE_C, TYPE_D, 
+        TYPE_N
     };
 
-    static constexpr EType TypeRightArr[] = {
-        /* [TYPE_A] = */ TYPE_A,
-        /* [TYPE_B] = */ TYPE_B,
-        /* [TYPE_C] = */ TYPE_C,
-        /* [TYPE_N] = */ TYPE_N,
+    enum EOffset
+    {
+        OFFSET_A, OFFSET_B, OFFSET_C, OFFSET_D, OFFSET_E, OFFSET_F, OFFSET_G, 
+        OFFSET_N
+    }
+
+    static constexpr EType TopTypeArr[] = {
+        /* [NType == TYPE_A] = */ TYPE_N;
+        /* [NType == TYPE_B] = */ TYPE_B;
+        /* [NType == TYPE_C] = */ TYPE_B;
+        /* [NType == TYPE_D] = */ TYPE_C;
     };
 
-    static constexpr EType TypeLeftArr[] = {
-        /* [TYPE_A] = */ TYPE_N,
-        /* [TYPE_B] = */ TYPE_B,
-        /* [TYPE_C] = */ TYPE_B,
-        /* [TYPE_N] = */ TYPE_N,
+    static constexpr EType MiddleTypeArr[] = {
+        /* [NType == TYPE_A] = */ TYPE_A;
+        /* [NType == TYPE_B] = */ TYPE_B;
+        /* [NType == TYPE_C] = */ TYPE_B;
+        /* [NType == TYPE_D] = */ TYPE_D;
+    };
+
+    static constexpr EType BottomTypeArr[] = {
+        /* [NType == TYPE_A] = */ TYPE_B;
+        /* [NType == TYPE_B] = */ TYPE_B;
+        /* [NType == TYPE_C] = */ TYPE_C;
+        /* [NType == TYPE_D] = */ TYPE_N;
+    };
+
+    static constexpr EOffset LeftOffsetArr[] = {
+        /* [OFFSET_A] = */ OFFSET_,
+        /* [OFFSET_B] = */ OFFSET_,
+        /* [OFFSET_C] = */ OFFSET_,
+        /* [OFFSET_D] = */ OFFSET_,
+        /* [OFFSET_E] = */ OFFSET_,
+        /* [OFFSET_F] = */ OFFSET_,
+        /* [OFFSET_G] = */ OFFSET_,
+    };
+
+    static constexpr EOffset HalfLeftOffsetArr[] = {
+        /* [OFFSET_A] = */ OFFSET_,
+        /* [OFFSET_B] = */ OFFSET_,
+        /* [OFFSET_C] = */ OFFSET_,
+        /* [OFFSET_D] = */ OFFSET_,
+        /* [OFFSET_E] = */ OFFSET_,
+        /* [OFFSET_F] = */ OFFSET_,
+        /* [OFFSET_G] = */ OFFSET_,
+    };
+
+    static constexpr EOffset MiddleOffsetArr[] = {
+        /* [OFFSET_A] = */ OFFSET_,
+        /* [OFFSET_B] = */ OFFSET_,
+        /* [OFFSET_C] = */ OFFSET_,
+        /* [OFFSET_D] = */ OFFSET_,
+        /* [OFFSET_E] = */ OFFSET_,
+        /* [OFFSET_F] = */ OFFSET_,
+        /* [OFFSET_G] = */ OFFSET_,
+    };
+
+    static constexpr EOffset HalfRightOffsetArr[] = {
+        /* [OFFSET_A] = */ OFFSET_,
+        /* [OFFSET_B] = */ OFFSET_,
+        /* [OFFSET_C] = */ OFFSET_,
+        /* [OFFSET_D] = */ OFFSET_,
+        /* [OFFSET_E] = */ OFFSET_,
+        /* [OFFSET_F] = */ OFFSET_,
+        /* [OFFSET_G] = */ OFFSET_,
+    };
+
+    static constexpr EOffset RightOffsetArr[] = {
+        /* [OFFSET_A] = */ OFFSET_,
+        /* [OFFSET_B] = */ OFFSET_,
+        /* [OFFSET_C] = */ OFFSET_,
+        /* [OFFSET_D] = */ OFFSET_,
+        /* [OFFSET_E] = */ OFFSET_,
+        /* [OFFSET_F] = */ OFFSET_,
+        /* [OFFSET_G] = */ OFFSET_,
     };
 
     // TODO: to generate code for the each case
     template<size_t NRank, typename TStencil, typename TGeneralLayer>
-    static void traverse(const TStencil& stencil, 
-                         TGeneralLayer* layers) noexcept
+    static void traverse(const TStencil& stencil, TGeneralLayer* layers) 
+                         noexcept
     {
-        // guaranteed to be 2's power
-        static constexpr size_t NLineCnt = 
-            TGeneralLayer::NDomainLengthX / (1u << NTileRank);
+        int64_t left_idx = 
+            TGeneralLayer::template 
+            off_right<TGeneralLayer::NDomainRankX>(0, 1) + 
+            TGeneralLayer::template 
+            off_bottom<TGeneralLayer::NDomainRankY>(0, 1);
 
-        // FIXME:
-        static constexpr size_t NIdx = 
-            TGeneralLayer::template off_right<NRank>(0, 1) +
-            TGeneralLayer::template off_bottom<NRank>(0, 1);
+        int64_t right_idx = left_idx + 
+            TGeneralLayer::template off_right<NTileRank - 1>(left_idx, 1) +
+            TGeneralLayer::template off_top<NTileRank - 1>(left_idx, 1);
 
-        // FIXME: (1u << NRank)
-        traverse_lines<NLineCnt, NRank, true>(NIdx, stencil, layers);
-        traverse_bound<(1u << NRank), NRank>(0, stencil, layers);
-    }
+        int64_t col = TGeneralLayer::NDomainLengthX;
+        proc_line<NRank, OFFSET_G, LINE_R>
+            (col + NTileSize / 2, right_idx, 0, stencil, layers);
+        proc_line<NRank, OFFSET_F, LINE_L>
+            (col, left_idx, 0, stencil, layers);
 
-    template<size_t NLineCnt, size_t NRank, bool NIsTypeC, 
-             typename TStencil, typename TGeneralLayer>
-    static void traverse_lines(int64_t idx, int64_t layer_idx, 
-            const TStencil& stencil, TGeneralLayer* layers) noexcept
-    {
-        int64_t left_idx = idx;
-        int64_t right_idx = idx + TGeneralLayer::template 
-            off_right<NTileRank + NChunkRank - 1>(idx, 1);
+        right_idx += TGeneralLayer::template 
+            off_left<NTileRank>(right_idx, 1);
+        left_idx += TGeneralLayer::template 
+            off_left<NTileRank>(left_idx, 1);
 
-        if constexpr (NLineCnt == 1)
+        proc_line<NRank, OFFSET_E, LINE_R>
+            (col + NTileSize / 2, right_idx, 0, stencil, layers);
+        proc_line<NRank, OFFSET_D, LINE_L>
+            (col, left_idx, 0, stencil, layers);
+
+        for (col = col - 2 * NTileSize; col >= NTileSize; col -= NTileSize)
         {
-            // call right to left
-            if constexpr (NIsTypeC)
-            {
-                // type C case
-                proc_line<NRank, TYPE_RC, false>
-                    (right_idx, layer_idx, stencil, layers);
-                proc_line<NRank, TYPE_LC, true>
-                    (left_idx, layer_idx, stencil, layers);
-            }
-            else
-            {
-                // type B case
-                proc_line<NRank, TYPE_RB, false>
-                    (right_idx, layer_idx, stencil, layers);
-                proc_line<NRank, TYPE_LB, true>
-                    (left_idx, layer_idx, stencil, layers);
-            }
+            right_idx += TGeneralLayer::template 
+                off_left<NTileRank>(right_idx, 1);
+            left_idx += TGeneralLayer::template 
+                off_left<NTileRank>(left_idx, 1);
+
+            proc_line<NRank, OFFSET_C, LINE_R>
+                (col + NTileSize / 2, right_idx, 0, stencil, layers);
+            proc_line<NRank, OFFSET_C, LINE_L>
+                (col, left_idx, 0, stencil, layers);
         }
-        else
+
+        right_idx += TGeneralLayer::template 
+            off_left<NTileRank>(right_idx, 1);
+        left_idx += TGeneralLayer::template 
+            off_left<NTileRank>(left_idx, 1);
+
+        proc_line<NRank, OFFSET_B, LINE_R>
+            (col + NTileSize / 2, right_idx, 0, stencil, layers);
+        proc_line<NRank, OFFSET_A, LINE_L>
+            (col, left_idx, 0, stencil, layers);
+
+        for (size_t cur_time = 0; cur_time < (1u << NRank);)
         {
-            // traverse right to left
-            traverse_lines<NLineCnt / 2, NRank, NIsTypeC>
-                (right_idx, layer_idx, stencil, layers);
-            traverse_lines<NLineCnt / 2, NRank, NIsTypeC>
-                (left_idx, layer_idx, stencil, layers);
+            cur_time += NTileSize / 2;
+            proc_line<NRank, OFFSET_A, LINE_R>
+                (0, left_idx, cur_time, stencil, layers);
 
-            // proc most - left (type A case)
-            if constexpr (NLineCnt % 2)
-            {
-                proc_line<NRank, TYPE_RA, false>
-                    (right_idx, layer_idx, stencil, layers);
-                proc_line<NRank, TYPE_LA, true>
-                    (left_idx, layer_idx, stencil, layers);
-            }
-        }
-    }
-
-    template<size_t NLineCnt, size_t NRank, EType NType, 
-             typename TStencil, typename TGeneralLayer>
-    static void traverse_bound(int64_t idx, int64_t layer_idx, 
-            const TStencil& stencil, TGeneralLayer* layers) noexcept
-    {
-        static constexpr size_t NMod = TStencil::NDepth;
-
-        int64_t left_idx = idx;
-        int64_t right_idx = idx + TGeneralLayer::template 
-            off_top<NTileRank - 1>(idx, 1);
-
-        if constexpr (NLineCnt == 1)
-        {
-            layer_idx = (layer_idx + (1u << (NTileRank - 1))) % NMod;
-            proc_line<NRank, TYPE_LA, false>
-                (right_idx, layer_idx, stencil, layers);
-
-            layer_idx = (layer_idx + (1u << (NTileRank - 1))) % NMod;
-            proc_line<NRank, TYPE_LA, true>
-                (left_idx, layer_idx, stencil, layers);
-        }
-        else
-        {
-            traverse_bound<NLineCnt / 2, NRank>
-                (idx, layer_idx, stencil, layers);
-
-            layer_idx = (layer_idx + NLineCnt * (1u << (NTileRank - 1))) % NMod;
-
-            traverse_bound<NLineCnt / 2, NRank>
-                (idx, layer_idx, left_idx, stencil, layers);
+            cur_time += NTileSize / 2;
+            proc_line<NRank, OFFSET_A, LINE_L>
+                (0, left_idx, cur_time, stencil, layers);
         }
     }
 
-    template<size_t NRank, EType NType, bool NIsWide, 
+    template<size_t NRank, EOffset NOffset, ELine NType, 
              typename TStencil, typename TGeneralLayer>
-    static void proc_line(int64_t idx, int64_t layer_idx,
-            const TStencil& stencil, TGeneralLayer* layers) noexcept
+    static void proc_line(int64_t coord, int64_t idx, int64_t layer_idx, 
+                          const TStencil& stencil, TGeneralLayer* layers) 
+                          noexcept
     {
-        static constexpr size_t NLess = NRank - 1;
-        static constexpr size_t NMod = TStencil::NDepth;
-
-        // TODO: to generate code instead of this
-        if constexpr (NXType == TYPE_N || NYType == TYPE_N)
-            return;
-
         WM_ASSERT(idx >= 0, "index must be non-negative");
 
-        for (int64_t row_num = 0; 
-             row_num <= (1u << NRank - NTileRank); ++row_num)
+        if constexpr (NType == LINE_R)
         {
-            calc_cell<NXType, NYType, NLayerIdx>(idx, stencil, layers);
-            idx += TGeneralLayer::template off_top<NTileRank>(idx, 1);
+            proc_pole<NRank, NOffset, TYPE_C>
+                (coord, idx, layer_idx, stencil, layers);
+        }
+        else if constexpr (NType == LINE_L)
+        {
+            proc_pole<NRank, NOffset, TYPE_D>
+                (coord, idx, layer_idx, stencil, layers);
         }
 
-        if constexpr (NRank == 0u)
+        for (int64_t row = TGeneralLayer::NDomainLengthY - NTileSize; 
+             row > 0; row -= NTileSize)
         {
-            calc_cell<NXType, NYType, NLayerIdx>(idx, stencil, layers);
+            idx += TGeneralLayer::template 
+                off_top<NTileRank>(right_idx, 1);
+
+            proc_pole<NRank, NOffset, TYPE_B>
+                (coord, idx, layer_idx, stencil, layers);
         }
-        else
+
+        if constexpr (NType == LINE_L)
         {
-            // TODO: to optimize for z-order case
-            int64_t x_dec = TGeneralLayer::template off_left<NLess>(idx, 1);
-            int64_t y_dec = TGeneralLayer::template off_top<NLess>(idx, 1);
-            int64_t x_inc = TGeneralLayer::template off_right<NLess>(idx, 1);
-            int64_t y_inc = TGeneralLayer::template off_bottom<NLess>(idx, 1);
+            idx += TGeneralLayer::template 
+                off_top<NTileRank>(right_idx, 1);
 
-            proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][1], NLayerIdx>
-                (idx, stencil, layers); // XY
-
-            proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][1], NLayerIdx>
-                (idx + x_dec, stencil, layers); //0Y
-
-            proc_fold<NLess, TypeMtx[NXType][1], TypeMtx[NYType][0], NLayerIdx>
-                (idx + y_dec, stencil, layers); // X0
-
-            proc_fold<NLess, TypeMtx[NXType][0], TypeMtx[NYType][0], NLayerIdx>
-                (idx + x_dec + y_dec, stencil, layers); // 00
-
-            // upper layer
-            if constexpr (NRank <= NTileRank)
-            {
-                proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][3], 
-                          (NLayerIdx + (1 << NLess)) % NMod>
-                    (idx + x_inc + y_inc, stencil, layers); // XY
-
-                proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][3], 
-                          (NLayerIdx + (1 << NLess)) % NMod>
-                    (idx + y_inc, stencil, layers); //0Y
-
-                proc_fold<NLess, TypeMtx[NXType][3], TypeMtx[NYType][2], 
-                          (NLayerIdx + (1 << NLess)) % NMod>
-                    (idx + x_inc, stencil, layers); // X0
-
-                proc_fold<NLess, TypeMtx[NXType][2], TypeMtx[NYType][2], 
-                          (NLayerIdx + (1 << NLess)) % NMod>
-                    (idx, stencil, layers); // 00
-            }
+            proc_pole<NRank, NOffset, TYPE_A>
+                (coord, idx, layer_idx, stencil, layers);
         }
     }
 
-    template<EType NXType, EType NYType, size_t NLayerIdx, 
+    template<size_t NRank, EOffset NOffset, EType NType, 
              typename TStencil, typename TGeneralLayer>
-    static void calc_cell(int64_t idx, 
-            const TStencil& stencil, TGeneralLayer* layers) noexcept
+    static void proc_pole(int64_t coord, int64_t idx, int64_t layer_idx, 
+                          const TStencil& stencil, TGeneralLayer* layers) 
+                          noexcept
     {
-        if constexpr (NXType == TYPE_A || NXType == TYPE_N ||
-                      NYType == TYPE_A || NYType == TYPE_N)
+        call_fold<TStencil::NMod - 1, NOffset, NType>
+            (idx, layer_idx, stencil, layers);
+
+        layer_idx += NTileSize;
+
+        int64_t max_coord = 
+            std::min(TGeneralLayer::NDomainLengthX - NTileSize, 
+                     (1 << NRank) - layer_idx);
+
+        coord += NTileSize;
+        for (; coord < max_coord; coord += NTileSize)
+        {
+            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            call_fold<TStencil::NMod - 1, OFFSET_C, NType>
+                (idx, layer_idx, stencil, layers);
+            layer_idx += NTileSize;
+        }
+
+        if (coord < TGeneralLayer::NDomainLengthX - NTileSize / 2)
+        {
+            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            call_fold<TStencil::NMod - 1, OFFSET_D, NType>
+                (idx, layer_idx, stencil, layers);
+            layer_idx += NTileSize;
+
+            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            call_fold<TStencil::NMod - 1, OFFSET_F, NType>
+                (idx, layer_idx, stencil, layers);
+            layer_idx += NTileSize;
+        }
+        else
+        {
+            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            call_fold<TStencil::NMod - 1, OFFSET_E, NType>
+                (idx, layer_idx, stencil, layers);
+            layer_idx += NTileSize;
+
+            idx += TGeneralLayer::template off_right<NTileRank>(right_idx, 1);
+            call_fold<TStencil::NMod - 1, OFFSET_G, NType>
+                (idx, layer_idx, stencil, layers);
+            layer_idx += NTileSize;
+        }
+    }
+
+    template<size_t NLayerIdx, EOffset NOffset, EType NType, 
+             typename TStencil, typename TGeneralLayer>
+    static void call_fold(int64_t idx, int64_t layer_idx, 
+                          const TStencil& stencil, TGeneralLayer* layers) 
+                          noexcept
+    {
+        if (layer_idx == NLayerIdx)
+        {
+            proc_fold<NTileRank, NOffset, NLayerIdx, NType>
+                (idx, stencil, layers);
+        }
+        else if constexpr (NLayerIdx != 0)
+        {
+            call_fold<NLayerIdx - 1, NOffset, NType>
+                (idx, layer_idx, stencil, layers);
+        }
+    }
+
+    template<size_t NRank, int64_t NLayerIdx, EOffset NOffset, EType NType, 
+             typename TStencil, typename TGeneralLayer>
+    static void proc_fold(int64_t idx, 
+                          const TStencil& stencil, TGeneralLayer* layers) 
+                          noexcept
+    {
+        if constexpr (NType == TYPE_N || NOffset == OFFSET_N)
             return;
 
-        // TODO: to refactor with normal switch
-        static constexpr int NXSide = 
-            static_cast<int>(NXType) - static_cast<int>(TYPE_C);
+        static constexpr EType NTopType = []() -> EType {
+            if constexpr (NType == TYPE_A) return TYPE_N;
+            if constexpr (NType == TYPE_B) return TYPE_B;
+            if constexpr (NType == TYPE_C) return TYPE_B;
+            if constexpr (NType == TYPE_D) return TYPE_C;
 
-        static constexpr int NYSide = 
-            static_cast<int>(NYType) - static_cast<int>(TYPE_C);
+            return TYPE_N;
+        }();
+
+        static constexpr EType NMidType = []() -> EType {
+            if constexpr (NType == TYPE_A) return TYPE_A;
+            if constexpr (NType == TYPE_B) return TYPE_B;
+            if constexpr (NType == TYPE_C) return TYPE_B;
+            if constexpr (NType == TYPE_D) return TYPE_D;
+
+            return TYPE_N;
+        }();
+
+        static constexpr EType NBottomType = []() -> EType {
+            if constexpr (NType == TYPE_A) return TYPE_B;
+            if constexpr (NType == TYPE_B) return TYPE_B;
+            if constexpr (NType == TYPE_C) return TYPE_C;
+            if constexpr (NType == TYPE_D) return TYPE_N;
+
+            return TYPE_N;
+        }();
+
+        static constexpr EOffset NOffsetSub_2 = LeftOffsetArr[NOffset];
+        static constexpr EOffset NOffsetAdd_2 = RightOffsetArr[NOffset];
+
+        static constexpr EOffset NOffsetSub_1 = HalfLeftOffsetArr[NOffset];
+        static constexpr EOffset NOffsetAdd_1 = HalfRightOffsetArr[NOffset];
+
+        static constexpr size_t NLess = NRank - 1;
+        static constexpr size_t NNextLayerIdx = 
+            (NLayerIdx + (1 << NLess)) % TStencil::NMod;
+
+        if constexpr (NRank == 1)
+        {
+            if constexpr (NType == TYPE_D)
+                return;
+
+            int64_t x_sub = TGeneralLayer::template off_left<NLess>(idx, 1);
+            int64_t x_add = TGeneralLayer::template off_right<NLess>(idx, 1);
+
+            calc_cell<NLayerIdx, NOffset, NMidType>
+                (idx, stencil, layers);
+            calc_cell<NLayerIdx, NOffset - 1, NMidType>
+                (idx + x_sub, stencil, layers);
+
+            calc_cell<NNextLayerIdx, NOffset + 1, NMidType>
+                (idx + x_add, stencil, layers);
+            calc_cell<NNextLayerIdx, NOffset, NMidType>
+                (idx, stencil, layers);
+        }
+        else
+        {
+            int64_t y_sub = 
+                TGeneralLayer::template off_top<NLess - 1>(idx, 1);
+            int64_t y_add = 
+                TGeneralLayer::template off_bottom<NLess - 1>(idx, 1);
+
+            int64_t x_sub_1 = 
+                TGeneralLayer::template off_left<NLess - 1>(idx, 1);
+            int64_t x_sub_2 = 
+                TGeneralLayer::template off_left<NLess>(idx, 1);
+
+            int64_t x_add_1 = 
+                TGeneralLayer::template off_right<NLess - 1>(idx, 1);
+            int64_t x_add_2 = 
+                TGeneralLayer::template off_right<NLess>(idx, 1);
+
+            proc_fold<NLess, NLayerIdx, NBottomType>
+                (idx, stencil, layers);
+            proc_fold<NLess, NLayerIdx, NMidType>
+                (idx, stencil, layers);
+            proc_fold<NLess, NLayerIdx, NTopType>
+                (idx, stencil, layers);
+            proc_fold<NLess, NLayerIdx, NMidType>
+                (idx, stencil, layers);
+
+            proc_fold<NLess, NNextLayerIdx, NBottomType>
+                (idx, stencil, layers);
+            proc_fold<NLess, NNextLayerIdx, NMidType>
+                (idx, stencil, layers);
+            proc_fold<NLess, NNextLayerIdx, NTopType>
+                (idx, stencil, layers);
+            proc_fold<NLess, NNextLayerIdx, NMidType>
+                (idx, stencil, layers);
+        }
+    }
+
+    template<size_t NLayerIdx, int NOffset, EType NType, 
+             typename TStencil, typename TGeneralLayer>
+    static void calc_cell(int64_t idx, 
+                          const TStencil& stencil, TGeneralLayer* layers) 
+                          noexcept
+    {
+        if constexpr (NType == TYPE_N || NType == TYPE_D || 
+                      NOffset < -1 || NOffset > 1)
+            return;
+
+        static constexpr int NXSide = NOffset;
+
+        static constexpr int NYSide = []() -> int {
+            if constexpr (NType == TYPE_A) return -1;
+            else if constexpr (NType == TYPE_B) return 0;
+            else if constexpr (NType == TYPE_C) return 1;
+
+            return 0;
+        }();
 
         stencil.template apply<NXSide, NYSide, NLayerIdx>(idx, layers);
     }
