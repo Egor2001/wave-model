@@ -54,43 +54,51 @@
 	\label{introductory}
 	\frametitle{Постановка проблемы и актуальность}
 
-	\begin{block}{Проблема}
-		Оптимизация моделирования волнового процесса на двумерной сетке
-	\end{block}
+	% \begin{block}{Проблема}
+	%	Оптимизация моделирования волнового процесса на двумерной сетке
+	% \end{block}
 
 	\begin{columns}
 
-	\column{0.6\textwidth}
-		\begin{alertblock}{Наивное решение}
+	\column{0.65\textwidth}
+		\begin{block}{}
+			% $U^{n+1} = f\left(U^n, dx, dy, dt\right)$
 			\begin{verbatim}
-			for (T = 0; T <= MAX_TIME; ++T) {
+			for (n = 0; n <= MAX_TIME; ++n) {
 			  for (X = 0; X <= MAX_X; ++X) {
 			    for (Y = 0; Y <= MAY_Y; ++Y) {
 			      ...
-			      calculate(X, Y, dx, dy, dt);
-			      ...
+			      U[n+1] = f(U[n], U[n-1], dx, dy);
 			    }
 			  }
+			  U[n] = U[n+1];
 			}
 			\end{verbatim}
-		\end{alertblock}
+		\end{block}
 
-	\column{0.3\textwidth}
-		\begin{block}{Характерные параметры}
+	\column{0.30\textwidth}
+		\begin{block}{Локальный шаблон}
 			% TODO: уточнить параметры!!!
-			\begin{itemize}
-				\vspace{1ex}
-				\item{$\sim 1\,000\,000\,000$ узлов сетки}
-
-				\vspace{1ex}
-				\item{$\sim 1\,000\,000$ временн\'{ы}х слоев}
-
-				\vspace{1ex}
-				\item{$\sim 1\,000$ задач моделирования}
-			\end{itemize}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/CropStencil.png}
+			\end{figure}
 		\end{block}
 
 	\end{columns}
+
+	\begin{alertblock}{Характерные параметры}
+		\begin{columns}
+		\column{0.25\textwidth}
+			$\sim 1\,000\,000\,000$ \\ узлов сетки
+
+		\column{0.3\textwidth}
+			$\sim 1\,000\,000$ \\ временн\'{ы}х слоев
+
+		\column{0.35\textwidth}
+			$\sim 1\,000$ \\ задач моделирования
+		\end{columns}
+	\end{alertblock}
+
 \end{frame}
 
 % TODO
@@ -138,32 +146,24 @@
 
 	\begin{columns}
 
-	\column{0.45\textwidth}
+	\column{0.4\textwidth}
 		\begin{block}{ConeFold}
 			\begin{figure}
 				\includegraphics[width=\textwidth]{img/CropConeFold.png}
 			\end{figure}
-
-			% \begin{itemize}
-			%		\item Локально~-- рекурсивный
-			%		\item Средняя асинхронность
-			% \end{itemize}
 		\end{block}
 
 		\begin{block}{DiamondTorre}
 			\begin{figure}
 				\includegraphics[width=\textwidth]{img/CropDiamondTorre.png}
 			\end{figure}
-
-			% \begin{itemize}
-			% 	\item Нерекурсивный
-			% 	\item Высокая асинхронность
-			% \end{itemize}
 		\end{block}
 
-	\column{0.5\textwidth}
+	\column{0.55\textwidth}
 		\begin{alertblock}{Зависимость времени работы от размера сетки}
-			\vspace{160pt}
+			\begin{figure}
+				\includegraphics[width=\textwidth]{img/GraphTiling.png}
+			\end{figure}
 		\end{alertblock}
 
 	\end{columns}
@@ -176,7 +176,7 @@
 
 	\begin{columns}
 
-	\column{0.45\textwidth}
+	\column{0.4\textwidth}
 		\begin{block}{AVX, шаблон $2 \times 2$}
 			\begin{figure}
 				\includegraphics[width=\textwidth]{img/CropAVX2x2.png}
@@ -189,38 +189,15 @@
 			\end{figure}
 		\end{block}
 
-	\column{0.5\textwidth}
+	\column{0.55\textwidth}
 		\begin{alertblock}{Зависимость времени работы от размера сетки}
 			\begin{figure}
-				\includegraphics[width=\textwidth]{img/GraphAVX.png}
+				\includegraphics[width=\textwidth]{img/GraphVector.png}
 			\end{figure}
 		\end{alertblock}
 
 	\end{columns}
 \end{frame}
-
-% Multithread computations
-\begin{frame}[t]
-	\label{multithread}
-	\frametitle{Многопоточные вычисления}
-	\framesubtitle{Сравнение производительности}
-
-	\begin{columns}
-
-	\column{0.45\textwidth}
-		\begin{block}{C++17 Thread support library}
-			\vspace{150pt}
-		\end{block}
-
-	\column{0.45\textwidth}
-		\begin{block}{Стандарт OpenMP 4.5}
-			\vspace{150pt}
-		\end{block}
-
-	\end{columns}
-\end{frame}
-
-%-------------------------------------------------------------------------------
 
 % Data order
 \begin{frame}[t]
@@ -229,7 +206,7 @@
 
 	\begin{columns}
 
-	\column{0.45\textwidth}
+	\column{0.5\textwidth}
 		\begin{block}{Линейный порядок}
 			\begin{itemize}
 				\item Простые расчеты
@@ -237,13 +214,13 @@
 			\end{itemize}
 		\end{block}
 
-		\begin{alertblock}{Зависимость времени работы от размера сетки}
+		\begin{alertblock}{} % Зависимость времени работы от размера сетки
 			\begin{figure}
-				\includegraphics[width=\textwidth]{img/GraphOrder.png}
+				\includegraphics[width=\textwidth]{img/GraphLayout.png}
 			\end{figure}
 		\end{alertblock}
 
-	\column{0.45\textwidth}
+	\column{0.4\textwidth}
 		\begin{block}{Z~-- порядок}
 			\begin{itemize}
 				\item Более сложные расчеты
@@ -258,7 +235,6 @@
 	\end{columns}
 \end{frame}
 
-
 % Conclusion frame
 \begin{frame}
 	\label{conclusion}
@@ -267,21 +243,17 @@
 
 	\begin{columns}
 
-	\column{0.45\textwidth}
-		\begin{block}{Однопоточная версия}
-			\vspace{150pt}
+	\column{0.1\textwidth}
+
+	\column{0.8\textwidth}
+		\begin{block}{}
+			\vspace{180pt}
 			% \begin{figure}
 				% \includegraphics[width=\textwidth]{img/.png}
 			% \end{figure}
 		\end{block}
 
-	\column{0.45\textwidth}
-		\begin{block}{Многопоточная версия}
-			\vspace{150pt}
-			% \begin{figure}
-				% \includegraphics[width=\textwidth]{img/.png}
-			% \end{figure}
-		\end{block}
+	\column{0.1\textwidth}
 
 	\end{columns}
 \end{frame}
@@ -291,10 +263,5 @@
 	\label{materials}
 	\frametitle{Материалы}
 \end{frame}
-
-% [Final frame]
-% \begin{frame}
-% 	\frametitle{Спасибо за внимание}
-% \end{frame}
 
 \end{document}
