@@ -13,15 +13,15 @@ if __name__ == "__main__":
     bench_1, bench_2, bench_3 = pd.read_csv(name_1), pd.read_csv(name_2), pd.read_csv(name_3)
 
     fig, ax = plt.subplots()
-    ax.set_title('Время вычислений для 128 миллиардов узлов')
+    ax.set_title('Время вычислений для 64 миллиардов узлов')
     ax.set_xlabel('Размер сетки, байт')
     ax.set_ylabel('Время, секунды')
     ax.plot(bench_1.Grid, bench_1.Time, 
-            color='red', label='шаблон 2x2') # name_1.split(".")[0]
+            color='red', label='векторизация') # name_1.split(".")[0]
     ax.plot(bench_2.Grid, bench_2.Time, 
-            color='blue', label='шаблон 1x4') # name_2.split(".")[0]
+            color='blue', label='запуск в 4 потока') # name_2.split(".")[0]
     ax.plot(bench_3.Grid, bench_3.Time, 
-            color='black', label='без векторизации') # name_3.split(".")[0]
+            color='black', label='без оптимизации') # name_3.split(".")[0]
     ax.legend(loc='lower right')
 
     plt.savefig(str(sys.argv[4]))
